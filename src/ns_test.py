@@ -8,7 +8,7 @@ import sys
 import copy
 import ns_library as ns
 
-path = "/home/nunger/tesis/codigo/data/spectral_lines.txt"
+path = "../data/spectral_lines.txt"
 data = np.loadtxt(path, delimiter=" ")
 
 channel = data[:,0]
@@ -19,20 +19,20 @@ Tmax = 100
 
 #np.random.seed(1234)
 # --------------------- Function definitions -----------------------------
-def model(T, nu, nu0=37, sigmaL=2):
+def model(T, nu, nu0=37, sigmaL=2.0):
     """" Model 1 for the spectral lines model. """
     return T * np.exp(-(nu - nu0)**2 / (2 * sigmaL**2))
 
 
-def Likelihood(T, data, grid, sigma=1):
+def Likelihood(T, data, grid, sigma=1.0):
     """ Analytic expression of the Likelihhod for the spectral lines problem."""
+    # TODO implement logL
     N = len(data)
     exponent = np.sum((data - model(T, grid))**2)
     lh = (2*np.pi)**(-N/2.) * sigma**(-N) * np.exp(-exponent / (2*sigma**2))
-    res = lh * ns.Uniform(Tmin, Tmax)
-    if res == 0.0:
-       res = 1e-308
-    return res
+    #if lh == 0.0:
+    #   lh = 1e-308
+    return lh
 
 class ActiveObj:
     def __init__(self, T, cdf, xdata, ydata):
@@ -68,6 +68,7 @@ T = np.linspace(Tmin,Tmax,npts)
 pdf = [ns.Uniform(Tmin, Tmax) for t in T]
 #print "Analytic integration: {}\n".format(np.trapz(pdf,T))
 
+# TODO implement analytic CDF for Uniform
 cdf = ns.CDF(pdf, T)
 
 # x = np.linspace(0,1,1000)
@@ -82,7 +83,6 @@ N = 100 # Number of active objects
 N_MAX = 10000 # Maximum samples
 Obj = [] # List of active objects
 Samples = [] # All Samples
-Lstar = 0 # Current Likelihhod constraint
 w = 1 - np.exp(-1./N) # First width in prior mass
 xi = [] # Prior mass
 H = 0.0 # Information
@@ -124,7 +124,7 @@ while nest <= 700: #end * N * H:
 
     xi.append(np.exp(-float(nest)/N))
     nest += 1
-    w = np.exp(-float(nest)/N) - np.exp(-float(nest+1)/N) # Shrink weight size
+    w = np.exp(-float(nest-1)/N) - np.exp(-float(nest)/N) # Shrink weight size
 
     # Break loop if nest exeeds the maximum value
     if nest >= N_MAX:
@@ -144,11 +144,12 @@ plt.figure()
 plt.plot(xi, lvector)
 plt.xscale('log')
 
-plt.show()
+#plt.show()
 # --------------------------------------------------------------------------
 
 
 # # Plot of data
-# plt.plot(channel, signal, 'k--')
-# plt.plot(channel, signal, 'k*')
-# plt.show()
+#plt.figure()
+#plt.plot(channel, signal, 'k--*')
+#plt.plot(channel, signal, 'k*')
+plt.show()
