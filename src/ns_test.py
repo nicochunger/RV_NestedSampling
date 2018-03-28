@@ -46,6 +46,7 @@ def CDF(pdf, x):
 def SampleDist(cdf, x, N):
     """ Samples x values acording to a probability density function given by
     cdf. N is the number of values to be sampled. Returns a numpy array."""
+    # TODO hacerlo mas preciso usando interpolacion.
     samples = np.random.uniform(size=N) # N random numbers in [0,1)
     npts = len(samples) # Number of samples
     dist = np.zeros(npts) # Final distribution of x values following the cdf
@@ -66,14 +67,14 @@ class ActiveObj:
 
     def Sample(self):
         """ Samples the object. """
-        self.param = SampleDist(cdf, self.T, 1)
+        self.param = SampleDist(self.cdf, self.T, 1)
         self.Lhood = Likelihood(self.param, self.ydata, self.xdata)
 
     def Evolve(self, Lconstraint):
         """ Evolves the Object to find a new sample given the
         Likelihood constraint. """
         while 1:
-            tsample = SampleDist(cdf, T, 1)
+            tsample = SampleDist(self.cdf, self.T, 1)
             tL = Likelihood(tsample, self.ydata, self.xdata)
             if tL > Lconstraint:
                 self.param = tsample
@@ -84,6 +85,7 @@ class ActiveObj:
 
 npts = 5000
 T = np.linspace(Tmin,Tmax,npts)
+# TODO change pdf to prior pdf.
 pdf = [Likelihood(t, signal, channel) for t in T]
 print "Analytic integration: {}\n".format(np.trapz(pdf,T))
 
@@ -127,7 +129,8 @@ while nest <= end * N * H:
 
     # Update Evidence and Information
     Znew = Z + currZ
-    H = (currZ / Znew) * np.log(Obj[worst].Lhood) + (Z/Znew)*(H+np.log(Z)) - np.log(Znew)
+    H = (currZ / Znew) * np.log(Obj[worst].Lhood) + (Z/Znew)*(H+np.log(Z)) - np.
+        log(Znew)
     Z = Znew
     #print "Z = {} \t H = {:.3f} \t L = {} \t n = {}".format(Z, H, Obj[worst].Lhood, nest)
 
