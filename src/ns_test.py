@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 import copy
+import ns_library as ns
 
 path = "/home/nunger/tesis/codigo/data/spectral_lines.txt"
 data = np.loadtxt(path, delimiter=" ")
@@ -22,38 +23,16 @@ def model(T, nu, nu0=37, sigmaL=2):
     """" Model 1 for the spectral lines model. """
     return T * np.exp(-(nu - nu0)**2 / (2 * sigmaL**2))
 
-def Uniform(Vmin, Vmax):
-    """ This function creates a uniform prior for a certain range of values."""
-    return 1./(Vmax - Vmin)
 
 def Likelihood(T, data, grid, sigma=1):
     """ Analytic expression of the Likelihhod for the spectral lines problem."""
     N = len(data)
-    exponent = sum((data - model(T, grid))**2)
+    exponent = np.sum((data - model(T, grid))**2)
     lh = (2*np.pi)**(-N/2.) * sigma**(-N) * np.exp(-exponent / (2*sigma**2))
-    return Uniform(Tmin, Tmax) * lh
-
-def CDF(pdf, x):
-    """ Calculates de cummulative distribution function for a certain
-    probability density function. """
-    N = len(pdf)
-    res = np.zeros(N) # Array with stored results
-    for i in range(N):
-        res[i] = np.trapz(pdf[:i], x[:i])
-
+    res = lh * ns.Uniform(Tmin, Tmax)
+    if res == 0.0:
+       res = 1e-308
     return res
-
-def SampleDist(cdf, x, N):
-    """ Samples x values acording to a probability density function given by
-    cdf. N is the number of values to be sampled. Returns a numpy array."""
-    # TODO hacerlo mas preciso usando interpolacion.
-    samples = np.random.uniform(size=N) # N random numbers in [0,1)
-    npts = len(samples) # Number of samples
-    dist = np.zeros(npts) # Final distribution of x values following the cdf
-    for i in range(npts):
-        idx = (np.abs(cdf-samples[i])).argmin()
-        dist[i] = x[idx]
-    return dist
 
 class ActiveObj:
     def __init__(self, T, cdf, xdata, ydata):
@@ -67,14 +46,14 @@ class ActiveObj:
 
     def Sample(self):
         """ Samples the object. """
-        self.param = SampleDist(self.cdf, self.T, 1)
+        self.param = ns.SampleDist(self.cdf, self.T)
         self.Lhood = Likelihood(self.param, self.ydata, self.xdata)
 
     def Evolve(self, Lconstraint):
         """ Evolves the Object to find a new sample given the
         Likelihood constraint. """
         while 1:
-            tsample = SampleDist(self.cdf, self.T, 1)
+            tsample = ns.SampleDist(self.cdf, self.T, 1)
             tL = Likelihood(tsample, self.ydata, self.xdata)
             if tL > Lconstraint:
                 self.param = tsample
@@ -85,19 +64,21 @@ class ActiveObj:
 
 npts = 5000
 T = np.linspace(Tmin,Tmax,npts)
-# TODO change pdf to prior pdf.
-pdf = [Likelihood(t, signal, channel) for t in T]
-print "Analytic integration: {}\n".format(np.trapz(pdf,T))
+#pdf = [ns.Jeffreys(t, Tmin, Tmax) for t in T]
+pdf = [ns.Uniform(Tmin, Tmax) for t in T]
+#print "Analytic integration: {}\n".format(np.trapz(pdf,T))
 
-cdf = CDF(pdf, T)
-cdf /= max(cdf) # Normalization of the CDF
+cdf = ns.CDF(pdf, T)
 
-# plt.hist(dist, bins=60)
+# x = np.linspace(0,1,1000)
+# dist = cdf(x)
+# plt.figure()
+# plt.plot(x, dist)
 # plt.show()
 
 # ------------------- Nested Sampling algorithm ----------------------------
 # Definition of variables and objects
-N = 1000 # Number of active objects
+N = 100 # Number of active objects
 N_MAX = 10000 # Maximum samples
 Obj = [] # List of active objects
 Samples = [] # All Samples
@@ -110,27 +91,29 @@ Znew = Z # Updated Evidence
 nest = 0 # Current iteration of the Nested Sampling loop
 end = 2.0 # End condition for loop
 
+
 # Initialization of first objects
 for i in range(N):
     Obj.append(ActiveObj(T, cdf, channel, signal)) # Creates an Active Object
     Obj[i].Sample() # Samples it
 
 # Begin Nested Sampling loop
-while nest <= end * N * H:
+while nest <= 700: #end * N * H:
     # Search for worst Likelihood within the active objects
-    worst = 0
-    for i in range(N):
-        if(Obj[i].Lhood < Obj[worst].Lhood):
-            worst = i
+    lhoods = [obj.Lhood for obj in Obj]
+    worst = np.argmin(lhoods)
     currZ = w * Obj[worst].Lhood # Weight of object
     Obj[worst].wt = currZ
 
     # Update Evidence and Information
     Znew = Z + currZ
-    H = (currZ / Znew) * np.log(Obj[worst].Lhood) + (Z/Znew)*(H+np.log(Z)) - np.
-        log(Znew)
+    log1 = np.log(Obj[worst].Lhood)
+    log2 = np.log(Z)
+    log3 = np.log(Znew)
+    H = (currZ / Znew) * log1 + (Z/Znew)*(H+log2) - log3
+    #H = (currZ / Znew) * np.log(Obj[worst].Lhood) + (Z/Znew)*(H+np.log(Z)) - np.log(Znew)
     Z = Znew
-    #print "Z = {} \t H = {:.3f} \t L = {} \t n = {}".format(Z, H, Obj[worst].Lhood, nest)
+    print "Z = {} \t H = {:.3f} \t L = {} \t n = {}".format(Z, H, Obj[worst].Lhood, nest)
 
     # Save all chosen samples
     Samples.append(copy.deepcopy(Obj[worst]))
@@ -148,6 +131,9 @@ while nest <= end * N * H:
         print "Loop exceeded maximum iteration number of {}".format(N_MAX)
         break
 
+# Final correction
+
+
 print "Iterations: {}".format(nest)
 print "Final evidence: {}".format(Z)
 
@@ -156,6 +142,7 @@ lvector = [obj.Lhood for obj in Samples]
 
 plt.figure()
 plt.plot(xi, lvector)
+plt.xscale('log')
 
 plt.show()
 # --------------------------------------------------------------------------
