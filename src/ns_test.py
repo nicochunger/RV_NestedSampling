@@ -90,8 +90,6 @@ print "Analytic integration: {}\n".format(np.trapz(pdf,T))
 cdf = CDF(pdf, T)
 cdf /= max(cdf) # Normalization of the CDF
 
-#dist = SampleDist(cdf, T, 5000)
-
 # plt.hist(dist, bins=60)
 # plt.show()
 
@@ -108,7 +106,7 @@ H = 0.0 # Information
 Z = sys.float_info.min # Evidence, initially 0
 Znew = Z # Updated Evidence
 nest = 0 # Current iteration of the Nested Sampling loop
-end = 3.0 # End condition for loop
+end = 2.0 # End condition for loop
 
 # Initialization of first objects
 for i in range(N):
@@ -148,7 +146,7 @@ while nest <= end * N * H:
         break
 
 print "Iterations: {}".format(nest)
-print "Final evidende: {}".format(Z)
+print "Final evidence: {}".format(Z)
 
 # Plotting of solution
 lvector = [obj.Lhood for obj in Samples]
