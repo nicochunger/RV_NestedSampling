@@ -5,7 +5,7 @@
 import numpy as np
 from scipy import interpolate
 
-def Uniform(xmin, xmax):
+def Uniform(x, xmin, xmax):
     """ This function creates a uniform prior for a certain range of values."""
     return 1./np.abs(xmax - xmin)
 
@@ -34,3 +34,10 @@ def SampleDist(cdf, x, N=1):
     samples = np.random.uniform(size=N) # N random numbers in [0,1)
     dist = cdf(samples) # Final distribution of x values following the cdf
     return dist
+
+def PLUS(x, y):
+    """ Logarithmic sum. """
+    if x > y:
+        return x + np.log(1+np.exp(y-x))
+    elif y > x:
+        return y + np.log(1+np.exp(x-y))

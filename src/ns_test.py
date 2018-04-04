@@ -26,7 +26,6 @@ def model(T, nu, nu0=37, sigmaL=2.0):
 
 def Likelihood(T, data, grid, sigma=1.0):
     """ Analytic expression of the Likelihhod for the spectral lines problem."""
-    # TODO implement logL
     N = len(data)
     exponent = np.sum((data - model(T, grid))**2)
     lh = (2*np.pi)**(-N/2.) * sigma**(-N) * np.exp(-exponent / (2*sigma**2))
@@ -34,30 +33,39 @@ def Likelihood(T, data, grid, sigma=1.0):
     #   lh = 1e-308
     return lh
 
+def logLikelihood(T, data, grid, sigma=1.0):
+    """ Analytic expression of the Likelihhod for the spectral lines problem."""
+    N = len(data)
+    exponent = np.sum((data - model(T, grid))**2)
+    lh = (2*np.pi)**(-N/2.) * sigma**(-N) * np.exp(-exponent / (2*sigma**2))
+    #if lh == 0.0:
+    #   lh = 1e-308
+    return np.log(lh)
+
 class ActiveObj:
     def __init__(self, T, cdf, xdata, ydata):
         self.param = 0
-        self.Lhood = 0
+        self.logLhood = 0
         self.xdata = xdata
         self.ydata = ydata
         self.cdf = cdf
         self.T = T
-        self.wt = 0
+        self.logwt = 0
 
     def Sample(self):
         """ Samples the object. """
         self.param = ns.SampleDist(self.cdf, self.T)
-        self.Lhood = Likelihood(self.param, self.ydata, self.xdata)
+        self.logLhood = logLikelihood(self.param, self.ydata, self.xdata)
 
     def Evolve(self, Lconstraint):
         """ Evolves the Object to find a new sample given the
         Likelihood constraint. """
         while 1:
             tsample = ns.SampleDist(self.cdf, self.T, 1)
-            tL = Likelihood(tsample, self.ydata, self.xdata)
+            tL = logLikelihood(tsample, self.ydata, self.xdata)
             if tL > Lconstraint:
                 self.param = tsample
-                self.Lhood = tL
+                self.logLhood = tL
                 break
 
 # --------------------------------------------------------------------------
@@ -65,7 +73,7 @@ class ActiveObj:
 npts = 5000
 T = np.linspace(Tmin,Tmax,npts)
 #pdf = [ns.Jeffreys(t, Tmin, Tmax) for t in T]
-pdf = [ns.Uniform(Tmin, Tmax) for t in T]
+pdf = [ns.Uniform(t, Tmin, Tmax) for t in T]
 #print "Analytic integration: {}\n".format(np.trapz(pdf,T))
 
 # TODO implement analytic CDF for Uniform
@@ -79,18 +87,17 @@ cdf = ns.CDF(pdf, T)
 
 # ------------------- Nested Sampling algorithm ----------------------------
 # Definition of variables and objects
-N = 100 # Number of active objects
+N = 300 # Number of active objects
 N_MAX = 10000 # Maximum samples
 Obj = [] # List of active objects
 Samples = [] # All Samples
-w = 1 - np.exp(-1./N) # First width in prior mass
+logw = np.log(1 - np.exp(-1./N)) # First width in prior mass
 xi = [] # Prior mass
 H = 0.0 # Information
-Z = sys.float_info.min # Evidence, initially 0
-Znew = Z # Updated Evidence
+logZ = -sys.float_info.max # log(Evidence, initially 0)
+logZnew = logZ # Updated Evidence
 nest = 0 # Current iteration of the Nested Sampling loop
 end = 2.0 # End condition for loop
-
 
 # Initialization of first objects
 for i in range(N):
@@ -98,33 +105,39 @@ for i in range(N):
     Obj[i].Sample() # Samples it
 
 # Begin Nested Sampling loop
-while nest <= 700: #end * N * H:
+while nest <= 7 * N: #end * N * H:
     # Search for worst Likelihood within the active objects
-    lhoods = [obj.Lhood for obj in Obj]
+    lhoods = np.zeros([N])
+    for i in range(N):
+        lhoods[i] = Obj[i].logLhood
     worst = np.argmin(lhoods)
-    currZ = w * Obj[worst].Lhood # Weight of object
-    Obj[worst].wt = currZ
+    currZ = logw + Obj[worst].logLhood # Weight of object
+    Obj[worst].logwt = currZ
 
     # Update Evidence and Information
-    Znew = Z + currZ
-    log1 = np.log(Obj[worst].Lhood)
-    log2 = np.log(Z)
-    log3 = np.log(Znew)
-    H = (currZ / Znew) * log1 + (Z/Znew)*(H+log2) - log3
+    logZnew = ns.PLUS(logZ, currZ)
+    log1 = Obj[worst].logLhood
+    # log2 = logZ
+    # log3 = logZnew
+    #H = (currZ / Znew) * log1 + (logZ/Znew)*(H+log2) - log3
     #H = (currZ / Znew) * np.log(Obj[worst].Lhood) + (Z/Znew)*(H+np.log(Z)) - np.log(Znew)
-    Z = Znew
-    print "Z = {} \t H = {:.3f} \t L = {} \t n = {}".format(Z, H, Obj[worst].Lhood, nest)
+
+    H = np.exp(currZ - logZnew) * log1 + np.exp(logZ - logZnew) + (H+logZ) - logZnew
+
+    logZ = logZnew
+    print "logZ = {} \t H = {:.3f} \t logL = {} \t n = {}".format(logZ, H, log1, nest)
 
     # Save all chosen samples
     Samples.append(copy.deepcopy(Obj[worst]))
 
     #Kill worst object in favour of a new object
-    Lstar = Obj[worst].Lhood # Update Likelihood constraint
+    Lstar = Obj[worst].logLhood # Update Likelihood constraint
     Obj[worst].Evolve(Lstar) # Evolve the old sample for a new one
 
     xi.append(np.exp(-float(nest)/N))
     nest += 1
-    w = np.exp(-float(nest-1)/N) - np.exp(-float(nest)/N) # Shrink weight size
+    #w = np.exp(-float(nest-1)/N) - np.exp(-float(nest)/N) # Shrink weight size
+    logw -= 1.0/N
 
     # Break loop if nest exeeds the maximum value
     if nest >= N_MAX:
@@ -135,10 +148,11 @@ while nest <= 700: #end * N * H:
 
 
 print "Iterations: {}".format(nest)
-print "Final evidence: {}".format(Z)
+print "Final evidence: {}".format(np.exp(logZ))
 
 # Plotting of solution
-lvector = [obj.Lhood for obj in Samples]
+lvector = [np.exp(obj.logLhood) for obj in Samples]
+lvector = np.array(lvector)
 
 plt.figure()
 plt.plot(xi, lvector)
