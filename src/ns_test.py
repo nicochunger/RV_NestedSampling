@@ -56,13 +56,19 @@ class ActiveObj:
     def Evolve(self, Lconstraint):
         """ Evolves the Object to find a new sample given the
         Likelihood constraint. """
-        while 1:
+        count = 0
+        limit = 1000
+        while count <= limit:
             tsample = ns.SampleDist(self.cdf, self.T, 1)
             tL = logLikelihood(tsample)
             if tL > Lconstraint:
                 self.param = tsample
                 self.logLhood = tL
                 break
+
+        if count == limit:
+            sys.exit("Evolve() couldn't find a new Likelihood within the sample \
+                      constraint")
 
 # --------------------------------------------------------------------------
 
