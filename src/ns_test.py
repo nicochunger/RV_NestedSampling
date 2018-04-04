@@ -33,21 +33,17 @@ def Likelihood(T, data, grid, sigma=1.0):
     #   lh = 1e-308
     return lh
 
-def logLikelihood(T, data, grid, sigma=1.0):
+def logLikelihood(T, sigma=1.0):
     """ Analytic expression of the Likelihhod for the spectral lines problem."""
     N = len(data)
-    exponent = np.sum((data - model(T, grid))**2)
-    lh = (2*np.pi)**(-N/2.) * sigma**(-N) * np.exp(-exponent / (2*sigma**2))
-    #if lh == 0.0:
-    #   lh = 1e-308
+    exponent = -np.sum((signal - model(T, channel))**2) / (2*sigma**2)
+    lh = (2*np.pi)**(-N/2.) * sigma**(-N) * np.exp(exponent)
     return np.log(lh)
 
 class ActiveObj:
-    def __init__(self, T, cdf, xdata, ydata):
+    def __init__(self, T, cdf):
         self.param = 0
         self.logLhood = 0
-        self.xdata = xdata
-        self.ydata = ydata
         self.cdf = cdf
         self.T = T
         self.logwt = 0
@@ -55,14 +51,14 @@ class ActiveObj:
     def Sample(self):
         """ Samples the object. """
         self.param = ns.SampleDist(self.cdf, self.T)
-        self.logLhood = logLikelihood(self.param, self.ydata, self.xdata)
+        self.logLhood = logLikelihood(self.param)
 
     def Evolve(self, Lconstraint):
         """ Evolves the Object to find a new sample given the
         Likelihood constraint. """
         while 1:
             tsample = ns.SampleDist(self.cdf, self.T, 1)
-            tL = logLikelihood(tsample, self.ydata, self.xdata)
+            tL = logLikelihood(tsample)
             if tL > Lconstraint:
                 self.param = tsample
                 self.logLhood = tL
@@ -101,7 +97,7 @@ end = 2.0 # End condition for loop
 
 # Initialization of first objects
 for i in range(N):
-    Obj.append(ActiveObj(T, cdf, channel, signal)) # Creates an Active Object
+    Obj.append(ActiveObj(T, cdf)) # Creates an Active Object
     Obj[i].Sample() # Samples it
 
 # Begin Nested Sampling loop
