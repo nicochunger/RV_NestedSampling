@@ -39,5 +39,5 @@ def PLUS(x, y):
     """ Logarithmic sum. """
     if x > y:
         return x + np.log(1+np.exp(y-x))
-    elif y > x:
+    else:
         return y + np.log(1+np.exp(x-y))
