@@ -6,6 +6,9 @@ import numpy as np
 from scipy import interpolate
 from scipy.integrate import quad
 
+# IDEA change the priors functions to return a single variable function instead
+# of the already evaluated value.
+
 def Uniform(x, xmin, xmax):
     """ This function creates a uniform prior for a certain range of values."""
     assert xmin < xmax, "xmin has to be lower than xmax."
@@ -15,7 +18,9 @@ def Jeffreys(x, xmin, xmax):
     """ This function returns the Jeffreys prior for a certain value. """
     assert xmax > 0, "xmax hasta to be greater than 0."
     assert xmax > xmin, "xmax hasta to be greater than xmin."
-    return 1./(x * np.log(float(xmax)/float(xmin)))
+    def prior(x):
+        return 1./(x * np.log(float(xmax)/float(xmin)))
+    return prior #1./(x * np.log(float(xmax)/float(xmin)))
 
 def CDF(pdf, x):
     """ Calculates the cummulative distribution function for a certain

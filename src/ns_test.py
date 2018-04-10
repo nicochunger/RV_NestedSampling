@@ -56,7 +56,7 @@ class ActiveObj:
         """ Evolves the Object to find a new sample given the
         Likelihood constraint. """
         count = 0
-        limit = 20000
+        limit = 100000
         while count <= limit:
             tsample = ns.SampleDist(self.cdf)
             tL = logLikelihood(tsample)
@@ -89,7 +89,7 @@ cdf = ns.CDF(pdf, T)
 
 # ------------------- Nested Sampling algorithm ----------------------------
 # Definition of variables and objects
-N = 300 # Number of active objects
+N = 800 # Number of active objects
 N_MAX = 10000 # Maximum samples
 Obj = [] # List of active objects
 Samples = [] # All Samples
@@ -108,7 +108,10 @@ for i in range(N):
     Obj[i].Sample() # Samples it
 
 # Begin Nested Sampling loop
-while nest <= 7 * N: #end * N * H:
+# TODO implement better termination condition
+tol = 1e-2
+termination = False
+while not termination: #end * N * H:
     # Search for worst Likelihood within the active objects
     lhoods = np.array([Obj[i].logLhood for i in range(N)])
     worst = np.argmin(lhoods)
@@ -136,6 +139,9 @@ while nest <= 7 * N: #end * N * H:
     # xi is always one step ahead to calculate wi with the trapezoidal rule
     xi.append(ns.sampleXi(N, xi[-1]))
     logw = np.log((xi[-3] - xi[-1])/2)
+
+    # Update termination condition
+    termination = xi[nest]*np.exp(np.mean(lhoods)) < tol * np.exp(logZ) #np.exp(logZ)
 
     # Increment iteration number
     nest += 1
