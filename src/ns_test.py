@@ -76,7 +76,6 @@ T = np.linspace(Tmin,Tmax,npts)
 #pdf = [ns.Jeffreys(t, Tmin, Tmax) for t in T]
 pdf = np.array([ns.Uniform(t, Tmin, Tmax) for t in T])
 lanaly = np.array([Likelihood(t) for t in T]) * ns.Uniform(0, Tmin, Tmax)
-print "Analytic integration: {}\n".format(np.trapz(lanaly,T))
 
 # TODO implement analytic CDF for Uniform
 cdf = ns.CDF(pdf, T)
@@ -89,7 +88,7 @@ cdf = ns.CDF(pdf, T)
 
 # ------------------- Nested Sampling algorithm ----------------------------
 # Definition of variables and objects
-N = 800 # Number of active objects
+N = 200 # Number of active objects
 N_MAX = 10000 # Maximum samples
 Obj = [] # List of active objects
 Samples = [] # All Samples
@@ -163,8 +162,9 @@ for obj in Obj:
 print "Final correction: {}\n".format(np.exp(final_corr))
 
 print "Iterations: {}".format(nest)
-print "Final evidence: {}".format(np.exp(logZ))
+print "Final evidence: {}\n".format(np.exp(logZ))
 
+print "Analytic integration: {}\n".format(np.trapz(lanaly,T))
 # Plotting of solution
 xi = np.array(xi[:-2])
 lvector = np.array([np.exp(obj.logLhood) for obj in Samples])

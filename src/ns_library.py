@@ -56,7 +56,7 @@ def SampleDist(cdf, N=1):
     ----------
     cdf : function
           Inverse cummulative density function.
-    N : int (or list of ints)
+    N : int
         Number of samples to be returned. (default is 1)
 
     Returns
