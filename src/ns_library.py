@@ -77,5 +77,6 @@ def PLUS(x, y):
 
 def sampleXi(N, xi):
     """ Samples the next prior mass value. """
+    # TODO sample from analytic expression
     samples = np.random.uniform(size=N)
     return xi * np.max(samples)

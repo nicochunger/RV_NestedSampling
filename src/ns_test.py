@@ -29,16 +29,14 @@ def Likelihood(T, sigma=1.0):
     N = len(data)
     exponent = -np.sum((signal - model(T, channel))**2) / (2*sigma**2)
     lh = (2*np.pi)**(-float(N)/2.0) * sigma**(-float(N)) * np.exp(exponent)
-    #if lh == 0.0:
-    #   lh = 1e-308
     return lh
 
 def logLikelihood(T, sigma=1.0):
     """ Analytic expression of the Likelihhod for the spectral lines problem."""
-    # N = len(data)
-    # exponent = -np.sum((signal - model(T, channel))**2) / (2*sigma**2)
-    # lh = (2*np.pi)**(-N/2.) * sigma**(-N) * np.exp(exponent)
-    return np.log(Likelihood(T)) #np.log(lh)
+    N = len(data)
+    exponent = -np.sum((signal - model(T, channel))**2) / (2*sigma**2)
+    logL = (-N/2.)*np.log(2*np.pi) - N*np.log(sigma) + exponent
+    return logL
 
 class ActiveObj:
     def __init__(self, cdf):
@@ -87,97 +85,105 @@ cdf = ns.CDF(pdf, T)
 # plt.show()
 
 # ------------------- Nested Sampling algorithm ----------------------------
-# Definition of variables and objects
-N = 200 # Number of active objects
-N_MAX = 10000 # Maximum samples
-Obj = [] # List of active objects
-Samples = [] # All Samples
-logw = np.log(1 - np.exp(-1./N)) # First width in prior mass
-xi = [1] # Prior mass points (inicially 1)
-xi.append(ns.sampleXi(N, xi[-1])) # Calculate next xi to be one step ahead
-H = 0.0 # Information
-logZ = -sys.float_info.max * sys.float_info.epsilon # log(Evidence, initially 0)
-logZnew = logZ # Updated Evidence
-nest = 0 # Current iteration of the Nested Sampling loop
-end = 2.0 # End condition for loop
+if __name__ == '__main__':
+    # Definition of variables and objects
+    N = 100 # Number of active objects
+    N_MAX = 10000 # Maximum samples
+    Obj = [] # List of active objects
+    Samples = [] # All Samples
+    xi = [1] # Prior mass points (inicially 1)
+    xi.append(ns.sampleXi(N, xi[-1])) # Calculate next xi to be one step ahead
+    logw = np.log(1 - xi[-1]) # First width in prior mass
+    H = 0.0 # Information
+    logZ = -sys.float_info.max * sys.float_info.epsilon # log(Evidence, initially 0)
+    logZnew = logZ # Updated Evidence
+    nest = 0 # Current iteration of the Nested Sampling loop
+    end = 2.0 # End condition for loop
 
-# Initialization of first objects
-for i in range(N):
-    Obj.append(ActiveObj(cdf)) # Creates an Active Object
-    Obj[i].Sample() # Samples it
+    # Initialization of first objects
+    for i in range(N):
+        Obj.append(ActiveObj(cdf)) # Creates an Active Object
+        Obj[i].Sample() # Samples it
 
-# Begin Nested Sampling loop
-# TODO implement better termination condition
-tol = 1e-2
-termination = False
-while not termination: #end * N * H:
-    # Search for worst Likelihood within the active objects
-    lhoods = np.array([Obj[i].logLhood for i in range(N)])
-    worst = np.argmin(lhoods)
-    currZ = logw + Obj[worst].logLhood # Weight of object
-    Obj[worst].logwt = currZ
+    # import pdb
+    # pdb.set_trace()
 
-    # Update Evidence and Information
-    logZnew = ns.PLUS(logZ, currZ)
-    log1 = Obj[worst].logLhood
-    H = np.exp(currZ - logZnew) * log1 + np.exp(logZ - logZnew) + (H+logZ) - logZnew
-    logZ = logZnew
+    # Begin Nested Sampling loop
 
-    # Print current data every 10 iteration
-    if nest % 10 == 0:
-        print "logZ = {} \t H = {:.3f} \t logL = {} \t n = {}".format(logZ, H, log1, nest)
+    tol = 1e-2
+    termination = False
+    while not termination: #end * N * H:
+        # Search for worst Likelihood within the active objects
+        lhoods = np.array([Obj[i].logLhood for i in range(N)])
+        worst = np.argmin(lhoods)
+        currZ = logw + Obj[worst].logLhood # Weight of object
+        Obj[worst].logwt = currZ
 
-    # Save all chosen samples
-    Samples.append(copy.deepcopy(Obj[worst]))
+        # Update Evidence and Information
+        logZnew = ns.PLUS(logZ, currZ)
+        log1 = Obj[worst].logLhood
+        H = np.exp(currZ - logZnew) * log1 + np.exp(logZ - logZnew) + (H+logZ) - logZnew
+        logZ = logZnew
 
-    #Kill worst object in favour of a new object
-    Lstar = Obj[worst].logLhood # Update Likelihood constraint
-    Obj[worst].Evolve(Lstar) # Evolve the old sample for a new one
+        # Print current data every 10 iteration
+        if nest % 10 == 0:
+            print "logZ = {} \t logL = {} \t n = {}".format(logZ, log1, nest)
 
-    # Update next prior mass value
-    # xi is always one step ahead to calculate wi with the trapezoidal rule
-    xi.append(ns.sampleXi(N, xi[-1]))
-    logw = np.log((xi[-3] - xi[-1])/2)
+        # Save all chosen samples
+        Samples.append(copy.deepcopy(Obj[worst]))
 
-    # Update termination condition
-    termination = xi[nest]*np.exp(np.mean(lhoods)) < tol * np.exp(logZ) #np.exp(logZ)
+        #Kill worst object in favour of a new object
+        Lstar = Obj[worst].logLhood # Update Likelihood constraint
+        Obj[worst].Evolve(Lstar) # Evolve the old sample for a new one
 
-    # Increment iteration number
-    nest += 1
+        # Update next prior mass value
+        # xi is always one step ahead to calculate wi with the trapezoidal rule
+        xi.append(ns.sampleXi(N, xi[-1]))
+        logw = np.log((xi[-3] - xi[-1])/2)
 
-    # Break loop if nest exeeds the maximum value
-    if nest >= N_MAX:
-        print "Loop exceeded maximum iteration number of {}".format(N_MAX)
-        break
+        # Update termination condition
+        termination = xi[nest]*np.exp(np.max(lhoods)) < tol * np.exp(logZ) #np.exp(logZ)
 
-# Final correction
-logw = -float(nest)/N - np.log(float(N))
-final_corr = 0
-for obj in Obj:
-    obj.logwt = logw + obj.logLhood
-    final_corr += obj.logwt
-    logZnew = ns.PLUS(logZ, obj.logwt)
-    H = np.exp(obj.logwt - logZnew) * obj.logLhood + np.exp(logZ - logZnew) + (H+logZ) - logZnew
-    logZ = logZnew
-print "Final correction: {}\n".format(np.exp(final_corr))
+        # Increment iteration number
+        nest += 1
 
-print "Iterations: {}".format(nest)
-print "Final evidence: {}\n".format(np.exp(logZ))
+        # Break loop if nest exeeds the maximum value
+        if nest >= N_MAX:
+            print "Loop exceeded maximum iteration number of {}".format(N_MAX)
+            break
 
-print "Analytic integration: {}\n".format(np.trapz(lanaly,T))
-# Plotting of solution
-xi = np.array(xi[:-2])
-lvector = np.array([np.exp(obj.logLhood) for obj in Samples])
+    # Final correction
+    logw = -float(nest)/N - np.log(float(N))
+    final_corr = 0
+    for obj in Obj:
+        obj.logwt = logw + obj.logLhood
+        final_corr += obj.logwt
+        logZnew = ns.PLUS(logZ, obj.logwt)
+        H = np.exp(obj.logwt - logZnew) * obj.logLhood + np.exp(logZ - logZnew) + (H+logZ) - logZnew
+        logZ = logZnew
+    print "Final correction: {}\n".format(np.exp(final_corr))
 
-plt.figure()
-plt.plot(xi, lvector)
-plt.xscale('log')
+    print "Iterations: {}".format(nest)
+    print "Final evidence: {}\n".format(np.exp(logZ))
 
-#plt.show()
-# --------------------------------------------------------------------------
+    print "Analytic integration: {}\n".format(np.trapz(lanaly,T))
+    # Plotting of solution
+    xi = np.array(xi[:-2])
+    lvector = np.array([np.exp(obj.logLhood) for obj in Samples])
+
+    xsamples = np.array([obj.param for obj in Samples])
+
+    plt.plot(xsamples, '.')
+
+    plt.figure()
+    plt.plot(xi, lvector)
+    plt.xscale('log')
+
+    #plt.show()
+    # --------------------------------------------------------------------------
 
 
-# # Plot of data
-#plt.figure()
-#plt.plot(channel, signal, 'k--*')
-plt.show()
+    # # Plot of data
+    #plt.figure()
+    #plt.plot(channel, signal, 'k--*')
+    plt.show()
