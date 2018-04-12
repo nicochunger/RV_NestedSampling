@@ -127,7 +127,8 @@ if __name__ == '__main__':
 
         # Print current data every 10 iteration
         if nest % 10 == 0:
-            print "logZ = {} \t logL = {} \t n = {}".format(logZ, log1, nest)
+            print("logZ = {} \t logL = {} \t n = {}".format(logZ, log1,
+                                                            nest))
 
         # Save all chosen samples
         Samples.append(copy.deepcopy(Obj[worst]))
@@ -149,7 +150,7 @@ if __name__ == '__main__':
 
         # Break loop if nest exeeds the maximum value
         if nest >= N_MAX:
-            print "Loop exceeded maximum iteration number of {}".format(N_MAX)
+            print("Loop exceeded maximum iteration number of {}".format(N_MAX))
             break
 
     # Final correction
@@ -161,12 +162,12 @@ if __name__ == '__main__':
         logZnew = ns.PLUS(logZ, obj.logwt)
         H = np.exp(obj.logwt - logZnew) * obj.logLhood + np.exp(logZ - logZnew) + (H+logZ) - logZnew
         logZ = logZnew
-    print "Final correction: {}\n".format(np.exp(final_corr))
+    print("Final correction: {}\n".format(np.exp(final_corr)))
 
-    print "Iterations: {}".format(nest)
-    print "Final evidence: {}\n".format(np.exp(logZ))
+    print("Iterations: {}".format(nest))
+    print("Final evidence: {}\n".format(np.exp(logZ)))
 
-    print "Analytic integration: {}\n".format(np.trapz(lanaly,T))
+    print("Analytic integration: {}\n".format(np.trapz(lanaly,T)))
     # Plotting of solution
     xi = np.array(xi[:-2])
     lvector = np.array([np.exp(obj.logLhood) for obj in Samples])
