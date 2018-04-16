@@ -51,7 +51,7 @@ class ActiveObj:
         self.param = ns.SampleDist(self.cdf)
         self.logLhood = logLikelihood(self.param)
 
-    def Evolve(self, Lconstraint):
+    def Evolve(self, Lconstraint, sampLimit):
         """ Evolves the Object to find a new sample given the
         Likelihood constraint. """
         count = 0
@@ -87,14 +87,15 @@ cdf = ns.CDF(pdf, T)
 # plt.show()
 
 # ------------------- Nested Sampling algorithm ----------------------------
-if __name__ == '__main__':
+#if __name__ == '__main__':
+def ns_algorithm(N, tol=1e-2):
     evidences = []
-    for i in range(40):
+    for i in range(50):
         # Initial sampling limits
         sampLimit = [Tmin, Tmax]
 
         # Definition of variables and objects
-        N = 300 # Number of active objects
+        # N = 300 # Number of active objects
         N_MAX = 10000 # Maximum samples
         Obj = [] # List of active objects
         Samples = [] # All Samples
@@ -111,12 +112,10 @@ if __name__ == '__main__':
             Obj.append(ActiveObj(cdf)) # Creates an Active Object
             Obj[i].Sample() # Samples it
 
-        # import pdb
-        # pdb.set_trace()
 
-        # Begin Nested Sampling loop
+        # ------Begin Nested Sampling loop---------
 
-        tol = 1e-2 # Termination tolerance
+        # tol = 1e-2 # Termination tolerance
         termination = False
         while not termination: #end * N * H:
             # Search for worst Likelihood within the active objects
@@ -144,7 +143,7 @@ if __name__ == '__main__':
 
             #Kill worst object in favour of a new object
             Lstar = Obj[worst].logLhood # Update Likelihood constraint
-            Obj[worst].Evolve(Lstar) # Evolve the old sample for a new one
+            Obj[worst].Evolve(Lstar, sampLimit) # Evolve the old sample for a new one
 
             # Update next prior mass value
             # xi is always one step ahead to calculate wi with the trapezoidal rule
@@ -161,6 +160,7 @@ if __name__ == '__main__':
             if nest >= N_MAX:
                 print("Loop exceeded maximum iteration number of {}".format(N_MAX))
                 break
+        #--------End of Nested Sampling loop----------------
 
         # Final correction
         logw = -float(nest)/N - np.log(float(N))
@@ -174,7 +174,7 @@ if __name__ == '__main__':
         # print "Final correction: {}\n".format(np.exp(final_corr))
 
         # print "Iterations: {}".format(nest)
-        print("Final evidence: {}".format(np.exp(logZ)))
+        # print("Final evidence: {}".format(np.exp(logZ)))
         evidences.append(np.exp(logZ))
 
         # print "Analytic integration: {}\n".format(np.trapz(lanaly,T))
@@ -199,3 +199,4 @@ if __name__ == '__main__':
         #plt.plot(channel, signal, 'k--*')
         # plt.show()
     print("Avergage evidence: {}".format(np.mean(evidences)))
+    return np.array(evidences)
