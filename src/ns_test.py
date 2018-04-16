@@ -18,7 +18,6 @@ signal = data[:,1]
 Tmin = 0.1
 Tmax = 100
 
-#np.random.seed(1234)
 # --------------------- Function definitions -----------------------------
 def model(T, nu, nu0=37, sigmaL=2.0):
     """ Model 1 for the spectral lines model. """
@@ -87,16 +86,37 @@ cdf = ns.CDF(pdf, T)
 # plt.show()
 
 # ------------------- Nested Sampling algorithm ----------------------------
-#if __name__ == '__main__':
-def ns_algorithm(N, tol=1e-2):
+def NestedSampling(N, iterations=50, tol=1e-2):
+    """ Runs the Nested Sampling algorithm for a certain amount of iterations
+    and Calculates the resulting evidence each time.
+
+    Parameters
+    ----------
+    N: int
+        Number of live points to be used in the Nested Sampling algortihm.
+    iterations: int (default = 50)
+        How many times the algorithm is run. Saving all the results.
+    tol: float (default = 1e-2)
+        Tolerance for the termination condition. Nested Sampling loop ends when
+        the estimated remaining evidence is less than the current calculates
+        evidence time the tolerance.
+
+    Returns
+    -------
+    evidences: ndarray
+        Contains all the evidences calculated in each iteration.
+    xi: ndarray
+        Prior mass values for the last iteration.
+    lvector: ndarray
+        Contributions to the Likelihood of each xi for the last iteration.
+    """
     evidences = []
-    for i in range(50):
+    for i in range(iterations):
         # Initial sampling limits
         sampLimit = [Tmin, Tmax]
 
         # Definition of variables and objects
-        # N = 300 # Number of active objects
-        N_MAX = 10000 # Maximum samples
+        N_MAX = 50000 # Maximum samples
         Obj = [] # List of active objects
         Samples = [] # All Samples
         xi = [1] # Prior mass points (inicially 1)
@@ -114,8 +134,6 @@ def ns_algorithm(N, tol=1e-2):
 
 
         # ------Begin Nested Sampling loop---------
-
-        # tol = 1e-2 # Termination tolerance
         termination = False
         while not termination: #end * N * H:
             # Search for worst Likelihood within the active objects
@@ -171,13 +189,9 @@ def ns_algorithm(N, tol=1e-2):
             logZnew = ns.PLUS(logZ, obj.logwt)
             H = np.exp(obj.logwt - logZnew) * obj.logLhood + np.exp(logZ - logZnew) + (H+logZ) - logZnew
             logZ = logZnew
-        # print "Final correction: {}\n".format(np.exp(final_corr))
 
-        # print "Iterations: {}".format(nest)
-        # print("Final evidence: {}".format(np.exp(logZ)))
         evidences.append(np.exp(logZ))
 
-        # print "Analytic integration: {}\n".format(np.trapz(lanaly,T))
         # Plotting of solution
         xi = np.array(xi[:-2])
         lvector = np.array([np.exp(obj.logLhood) for obj in Samples])
@@ -199,4 +213,4 @@ def ns_algorithm(N, tol=1e-2):
         #plt.plot(channel, signal, 'k--*')
         # plt.show()
     print("Avergage evidence: {}".format(np.mean(evidences)))
-    return np.array(evidences)
+    return np.array(evidences), xi, lvector

@@ -5,18 +5,28 @@
 from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
-from ns_test import ns_algorithm
+from ns_test import NestedSampling
+import time
 
-results = []
+start_time = time.time()
 
-N = np.arange(100, 1001, 100)
+results = [] # List of arrays with all the evidences
+prior_masses = [] # List of arrays with the prior masses of the last iterations
+likelihoods = [] # List of arrays with the likelihoods of the last iterations
 
+# Number of live points to be analized
+N = np.arange(1100, 2001, 100)
+
+# Main loop
 for i in range(len(N)):
-    result = ns_algorithm(N[i])
+    result, priormass, lh = NestedSampling(N[i])
     results.append(result)
+    prior_masses.append(priormass)
+    likelihoods.append(lh)
 
-#print(results)
+print("Run time: {} seconds".format(time.time() - start_time))
 
+# Plotting
 plt.boxplot(results, labels=N)
 plt.xlabel("Live points")
 plt.ylabel("Evidence")
