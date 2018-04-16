@@ -18,8 +18,6 @@ signal = data[:,1]
 Tmin = 0.1
 Tmax = 100
 
-
-
 #np.random.seed(1234)
 # --------------------- Function definitions -----------------------------
 def model(T, nu, nu0=37, sigmaL=2.0):
@@ -161,7 +159,7 @@ if __name__ == '__main__':
 
             # Break loop if nest exeeds the maximum value
             if nest >= N_MAX:
-                print "Loop exceeded maximum iteration number of {}".format(N_MAX)
+                print("Loop exceeded maximum iteration number of {}".format(N_MAX))
                 break
 
         # Final correction
@@ -176,7 +174,7 @@ if __name__ == '__main__':
         # print "Final correction: {}\n".format(np.exp(final_corr))
 
         # print "Iterations: {}".format(nest)
-        print "Final evidence: {}".format(np.exp(logZ))
+        print("Final evidence: {}".format(np.exp(logZ)))
         evidences.append(np.exp(logZ))
 
         # print "Analytic integration: {}\n".format(np.trapz(lanaly,T))
@@ -200,4 +198,4 @@ if __name__ == '__main__':
         #plt.figure()
         #plt.plot(channel, signal, 'k--*')
         # plt.show()
-    print "Avergage evidence: {}".format(np.mean(evidences))
+    print("Avergage evidence: {}".format(np.mean(evidences)))
