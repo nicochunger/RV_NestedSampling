@@ -193,8 +193,8 @@ def NestedSampling(N, iterations=50, tol=1e-2):
         evidences.append(np.exp(logZ))
 
         # Plotting of solution
-        xi = np.array(xi[:-2])
-        lvector = np.array([np.exp(obj.logLhood) for obj in Samples])
+        xi = np.array(xi[:-2], dtype=float)
+        lvector = np.array([np.exp(obj.logLhood) for obj in Samples], dtype=float)
 
         xsamples = np.array([obj.param for obj in Samples])
 
@@ -212,5 +212,5 @@ def NestedSampling(N, iterations=50, tol=1e-2):
         #plt.figure()
         #plt.plot(channel, signal, 'k--*')
         # plt.show()
-    print("Avergage evidence: {}".format(np.mean(evidences)))
+    print("Average evidence for N={} and {} iterations: {}".format(N,iterations,np.mean(evidences)))
     return np.array(evidences), xi, lvector
