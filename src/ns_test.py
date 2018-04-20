@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import sys
 import copy
 import ns_library as ns
+import scipy.stats as st
 
 path = "../data/spectral_lines.txt"
 data = np.loadtxt(path, delimiter=" ")
@@ -39,16 +40,18 @@ def logLikelihood(T, sigma=1.0):
     return logL
 
 class ActiveObj:
-    def __init__(self, cdf):
-        self.param = 0
-        self.logLhood = 0
-        self.cdf = cdf
-        self.logwt = 0
+    def __init__(self, ppf, logL):
+        self.param = 0.
+        self.logLhood = 0.
+        self.ppf = ppf
+        self.logwt = 0.
+        self.logLfunc = logL
 
     def Sample(self):
         """ Samples the object. """
-        self.param = ns.SampleDist(self.cdf)
-        self.logLhood = logLikelihood(self.param)
+        self.param = ns.SampleDist(self.ppf)
+        #self.logLhood = logLikelihood(self.param)
+        self.logLhood = self.logLfunc(self.param)
 
     def Evolve(self, Lconstraint, sampLimit):
         """ Evolves the Object to find a new sample given the
@@ -58,7 +61,8 @@ class ActiveObj:
         while count <= limit:
             tsample = np.random.uniform(sampLimit[0], sampLimit[1])
             #tsample = ns.SampleDist(self.cdf)
-            tL = logLikelihood(tsample)
+            # tL = logLikelihood(tsample)
+            tL = self.logLfunc(tsample)
             count += 1
             if tL > Lconstraint:
                 self.param = tsample
@@ -67,6 +71,16 @@ class ActiveObj:
 
         sys.exit("Evolve() couldn't find a sample with greater Likelihood \
                   within the sample limit constraint")
+
+def bimodal(loc1, loc2, sigma1, sigma2):
+    """ Creates a bimodal percent point function (inverse of cdf) with both
+    mean values and standart deviation given as parameter.
+
+    Returns a single variable function with the chosen bimodal distribution."""
+    def foo(x):
+        return np.log(st.norm.ppf(x, loc1, sigma1) + st.norm.ppf(x, loc2, sigma2))
+
+    return foo
 
 # --------------------------------------------------------------------------
 
@@ -77,7 +91,8 @@ pdf = np.array([ns.Uniform(t, Tmin, Tmax) for t in T])
 lanaly = np.array([Likelihood(t) for t in T]) * ns.Uniform(0, Tmin, Tmax)
 
 # TODO implement analytic CDF for Uniform
-cdf = ns.CDF(pdf, T)
+#cdf = ns.CDF(pdf, T)
+ppf = bimodal(3, 7, 0.3, 0.3)
 
 # x = np.linspace(0,1,1000)
 # dist = cdf(x)
@@ -85,8 +100,10 @@ cdf = ns.CDF(pdf, T)
 # plt.plot(x, dist)
 # plt.show()
 
+
+
 # ------------------- Nested Sampling algorithm ----------------------------
-def NestedSampling(N, iterations=50, tol=1e-2):
+def NestedSampling(N, priorPPF, logL, iterations=50, tol=1e-2):
     """ Runs the Nested Sampling algorithm for a certain amount of iterations
     and Calculates the resulting evidence each time.
 
@@ -113,7 +130,7 @@ def NestedSampling(N, iterations=50, tol=1e-2):
     evidences = []
     for i in range(iterations):
         # Initial sampling limits
-        sampLimit = [Tmin, Tmax]
+        # sampLimit = [Tmin, Tmax]
 
         # Definition of variables and objects
         N_MAX = 50000 # Maximum samples
@@ -129,15 +146,14 @@ def NestedSampling(N, iterations=50, tol=1e-2):
 
         # Initialization of first objects
         for i in range(N):
-            Obj.append(ActiveObj(cdf)) # Creates an Active Object
+            Obj.append(ActiveObj(priorPPF, logL)) # Creates an Active Object
             Obj[i].Sample() # Samples it
-
 
         # ------Begin Nested Sampling loop---------
         termination = False
         while not termination: #end * N * H:
             # Search for worst Likelihood within the active objects
-            lhoods = np.array([Obj[i].logLhood for i in range(N)])
+            lhoods = np.array([obj.logLhood for obj in Obj])
             worst = np.argmin(lhoods)
             currZ = logw + Obj[worst].logLhood # Weight of object
             Obj[worst].logwt = currZ
@@ -148,7 +164,7 @@ def NestedSampling(N, iterations=50, tol=1e-2):
             H = np.exp(currZ - logZnew) * log1 + np.exp(logZ - logZnew) + (H+logZ) - logZnew
             logZ = logZnew
 
-            # Print current data every 10 iteration
+            # # Print current data every 10 iteration
             # if nest % 10 == 0:
             #     print "logZ = {} \t logL = {} \t n = {}".format(logZ, log1, nest)
 
@@ -156,8 +172,12 @@ def NestedSampling(N, iterations=50, tol=1e-2):
             Samples.append(copy.deepcopy(Obj[worst]))
 
             # Adjust sampling limits
-            idx = np.abs(sampLimit - Obj[worst].param).argmin()
-            sampLimit[idx] = Obj[worst].param
+            params = [obj.param for obj in Obj]
+            print params
+            print lhoods
+            sampLimit = [min(params), max(params)]
+            # idx = np.abs(sampLimit - Obj[worst].param).argmin()
+            # sampLimit[idx] = Obj[worst].param
 
             #Kill worst object in favour of a new object
             Lstar = Obj[worst].logLhood # Update Likelihood constraint

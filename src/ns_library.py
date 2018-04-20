@@ -64,9 +64,14 @@ def SampleDist(cdf, N=1):
     ndarray
             List of samples.
     """
-    samples = np.random.uniform(size=N) # N random numbers in [0,1)
-    dist = cdf(samples) # Final distribution of x values following the cdf
-    return dist
+    if N == 1:
+        sample = np.random.uniform()
+        dist = cdf(sample)
+        return float(dist)
+    else:
+        samples = np.random.uniform(size=N) # N random numbers in [0,1)
+        dist = cdf(samples) # Final distribution of x values following the cdf
+        return dist
 
 def PLUS(x, y):
     """ Logarithmic sum. """
