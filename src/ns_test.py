@@ -28,14 +28,14 @@ def model(T, nu, nu0=37, sigmaL=2.0):
 def Likelihood(T, sigma=1.0):
     """ Analytic expression of the Likelihhod for the spectral lines problem."""
     N = len(data)
-    exponent = -np.sum((signal - model(T, channel))**2) / (2*sigma**2)
+    exponent = - np.sum((signal - model(T, channel))**2) / (2*sigma**2)
     lh = (2*np.pi)**(-float(N)/2.0) * sigma**(-float(N)) * np.exp(exponent)
     return lh
 
 def logLikelihood(T, sigma=1.0):
     """ Analytic expression of the Likelihhod for the spectral lines problem."""
     N = len(data)
-    exponent = -np.sum((signal - model(T, channel))**2) / (2*sigma**2)
+    exponent = - np.sum((signal - model(T, channel))**2) / (2*sigma**2)
     logL = (-N/2.)*np.log(2*np.pi) - N*np.log(sigma) + exponent
     return logL
 
@@ -72,13 +72,13 @@ class ActiveObj:
         sys.exit("Evolve() couldn't find a sample with greater Likelihood \
                   within the sample limit constraint")
 
-def bimodal(loc1, loc2, sigma1, sigma2):
+def bimodal(loc1, sigma1, loc2, sigma2):
     """ Creates a bimodal percent point function (inverse of cdf) with both
     mean values and standart deviation given as parameter.
 
     Returns a single variable function with the chosen bimodal distribution."""
     def foo(x):
-        return np.log(st.norm.ppf(x, loc1, sigma1) + st.norm.ppf(x, loc2, sigma2))
+        return np.log(st.norm.pdf(x, loc1, sigma1) + st.norm.pdf(x, loc2, sigma2))
 
     return foo
 
@@ -129,6 +129,7 @@ def NestedSampling(N, priorPPF, logL, iterations=50, tol=1e-2):
     """
     evidences = []
     for i in range(iterations):
+        print(i)
         # Initial sampling limits
         # sampLimit = [Tmin, Tmax]
 
@@ -173,8 +174,8 @@ def NestedSampling(N, priorPPF, logL, iterations=50, tol=1e-2):
 
             # Adjust sampling limits
             params = [obj.param for obj in Obj]
-            print params
-            print lhoods
+            #print(params)
+            #print(lhoods)
             sampLimit = [min(params), max(params)]
             # idx = np.abs(sampLimit - Obj[worst].param).argmin()
             # sampLimit[idx] = Obj[worst].param

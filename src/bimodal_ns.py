@@ -8,13 +8,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # FIXME the likelihood gives nan on almost all values.
-likelihood = bimodal(3, 7, 0.3, 0.3)
+likelihood = bimodal(3, 0.3, 7, 0.3)
 xmin = 0
 xmax = 10
 x = np.linspace(xmin, xmax, 1000)
-pdf = np.array([ns.Uniform(t, xmin, xmax) for t in x])
+pdf = np.array([Uniform(t, xmin, xmax) for t in x])
 prior = CDF(pdf, x)
 
-result = NestedSampling(100, prior, likelihood)
+numeric_vec = likelihood(x)/Uniform(1, xmin, xmax)
+evidence = np.trapz(numeric_vec, x)
 
-print result
+#
+print("Analytic result = {}".format(evidence))
+
+result = NestedSampling(100, prior, likelihood, 10)
+
+print(result[0])
