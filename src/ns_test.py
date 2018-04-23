@@ -16,8 +16,8 @@ channel = data[:,0]
 signal = data[:,1]
 
 # Minimun and maximum values for the parameter
-Tmin = 0.1
-Tmax = 100
+# Tmin = 0.1
+# Tmax = 100
 
 # --------------------- Function definitions -----------------------------
 def model(T, nu, nu0=37, sigmaL=2.0):
@@ -28,14 +28,14 @@ def model(T, nu, nu0=37, sigmaL=2.0):
 def Likelihood(T, sigma=1.0):
     """ Analytic expression of the Likelihhod for the spectral lines problem."""
     N = len(data)
-    exponent = - np.sum((signal - model(T, channel))**2) / (2*sigma**2)
+    exponent = -1 * np.sum((signal - model(T, channel))**2) / (2*sigma**2)
     lh = (2*np.pi)**(-float(N)/2.0) * sigma**(-float(N)) * np.exp(exponent)
     return lh
 
 def logLikelihood(T, sigma=1.0):
     """ Analytic expression of the Likelihhod for the spectral lines problem."""
     N = len(data)
-    exponent = - np.sum((signal - model(T, channel))**2) / (2*sigma**2)
+    exponent = -1 * np.sum((signal - model(T, channel))**2) / (2*sigma**2)
     logL = (-N/2.)*np.log(2*np.pi) - N*np.log(sigma) + exponent
     return logL
 
@@ -73,7 +73,7 @@ class ActiveObj:
                   within the sample limit constraint")
 
 def bimodal(loc1, sigma1, loc2, sigma2):
-    """ Creates a bimodal percent point function (inverse of cdf) with both
+    """ Creates a bimodal probability density function with both
     mean values and standart deviation given as parameter.
 
     Returns a single variable function with the chosen bimodal distribution."""
@@ -84,23 +84,21 @@ def bimodal(loc1, sigma1, loc2, sigma2):
 
 # --------------------------------------------------------------------------
 
-npts = 5000
-T = np.linspace(Tmin,Tmax,npts)
-#pdf = [ns.Jeffreys(t, Tmin, Tmax) for t in T]
-pdf = np.array([ns.Uniform(t, Tmin, Tmax) for t in T])
-lanaly = np.array([Likelihood(t) for t in T]) * ns.Uniform(0, Tmin, Tmax)
+# npts = 5000
+# T = np.linspace(Tmin,Tmax,npts)
+# #pdf = [ns.Jeffreys(t, Tmin, Tmax) for t in T]
+# pdf = np.array([ns.Uniform(t, Tmin, Tmax) for t in T])
+# lanaly = np.array([Likelihood(t) for t in T]) * ns.Uniform(0, Tmin, Tmax)
 
 # TODO implement analytic CDF for Uniform
 #cdf = ns.CDF(pdf, T)
-ppf = bimodal(3, 7, 0.3, 0.3)
+# ppf = bimodal(3, 7, 0.3, 0.3)
 
 # x = np.linspace(0,1,1000)
 # dist = cdf(x)
 # plt.figure()
 # plt.plot(x, dist)
 # plt.show()
-
-
 
 # ------------------- Nested Sampling algorithm ----------------------------
 def NestedSampling(N, priorPPF, logL, iterations=50, tol=1e-2):
@@ -129,9 +127,7 @@ def NestedSampling(N, priorPPF, logL, iterations=50, tol=1e-2):
     """
     evidences = []
     for i in range(iterations):
-        print(i)
         # Initial sampling limits
-        # sampLimit = [Tmin, Tmax]
 
         # Definition of variables and objects
         N_MAX = 50000 # Maximum samples
@@ -165,20 +161,12 @@ def NestedSampling(N, priorPPF, logL, iterations=50, tol=1e-2):
             H = np.exp(currZ - logZnew) * log1 + np.exp(logZ - logZnew) + (H+logZ) - logZnew
             logZ = logZnew
 
-            # # Print current data every 10 iteration
-            # if nest % 10 == 0:
-            #     print "logZ = {} \t logL = {} \t n = {}".format(logZ, log1, nest)
-
             # Save all chosen samples
             Samples.append(copy.deepcopy(Obj[worst]))
 
-            # Adjust sampling limits
+            # Adjust sampling limits as min and max of the para of active points
             params = [obj.param for obj in Obj]
-            #print(params)
-            #print(lhoods)
             sampLimit = [min(params), max(params)]
-            # idx = np.abs(sampLimit - Obj[worst].param).argmin()
-            # sampLimit[idx] = Obj[worst].param
 
             #Kill worst object in favour of a new object
             Lstar = Obj[worst].logLhood # Update Likelihood constraint
@@ -216,22 +204,13 @@ def NestedSampling(N, priorPPF, logL, iterations=50, tol=1e-2):
         # Plotting of solution
         xi = np.array(xi[:-2], dtype=float)
         lvector = np.array([np.exp(obj.logLhood) for obj in Samples], dtype=float)
-
-        xsamples = np.array([obj.param for obj in Samples])
-
-        # plt.plot(xsamples, '.')
-
-        # plt.figure()
-        # plt.plot(xi, lvector)
-        # plt.xscale('log')
-
-        #plt.show()
         # --------------------------------------------------------------------------
 
 
-        # # Plot of data
-        #plt.figure()
-        #plt.plot(channel, signal, 'k--*')
-        # plt.show()
     print("Average evidence for N={} and {} iterations: {}".format(N,iterations,np.mean(evidences)))
     return np.array(evidences), xi, lvector
+
+# # Plot of data
+#plt.figure()
+#plt.plot(channel, signal, 'k--*')
+#plt.show()
