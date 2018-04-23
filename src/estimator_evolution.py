@@ -2,23 +2,32 @@
 # -*- coding: utf-8 -*-
 # file: estimator_evolution.py
 
-from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
-from ns_test import NestedSampling
+from ns_test import logLikelihood, NestedSampling
+from ns_library import Uniform, CDF
 import time
 
+# Save start time to calculate the total run time
 start_time = time.time()
 
+# Prior information
+Tmin = 0.1
+Tmax = 100
+npts = 5000
+T = np.linspace(Tmin,Tmax,npts)
+pdf = pdf = np.array([Uniform(t, Tmin, Tmax) for t in T])
+cdf = CDF(pdf, T)
 
 # Number of live points to be analized
-Nmin = 300
-Nmax = 501
+Nmin = 200
+Nmax = 400
 step = 200
 N = np.arange(Nmin, Nmax, step)
 Nsize = len(N)
 
-niter = 500
+# Number of iterations of the Nested Sampling Algorithm for each N
+niter = 5
 
 # Preallocation of arrays
 results = [] # List of arrays with all the evidences
@@ -27,42 +36,43 @@ likelihoods = [] # List of arrays with the likelihoods of the last iterations
 
 # Main loop
 for i in range(len(N)):
-    result, priormass, lh = NestedSampling(N[i], iterations=niter)
+    result, priormass, lh = NestedSampling(N[i], cdf, logLikelihood, iterations=niter)
     results.append(result)
     prior_masses.append(priormass)
     likelihoods.append(lh)
 
+# Calculation of run time
 stop_time = time.time()
 delta_time = stop_time - start_time
 print("Run time: {}:{}".format(int(delta_time/60),int(delta_time%60)))
 
-# Save data to txt files
-N_text = "{}_{}_{}".format(Nmin, Nmax, step)
-path = "../../graficos/nested_sampling_test/iter{}/".format(niter)
-results_save_loc = path + "results_" + N_text + ".txt"
-np.savetxt(results_save_loc, results)
+# # Save data to txt files
+# N_text = "{}_{}_{}".format(Nmin, Nmax, step)
+# path = "../../graficos/nested_sampling_test/iter{}/".format(niter)
+# results_save_loc = path + "results_" + N_text + ".txt"
+# np.savetxt(results_save_loc, results)
 
-for i in range(Nsize):
-    xi_save_loc = path + "xi_" + str(N[i]) + ".txt"
-    np.savetxt(xi_save_loc, prior_masses[i])
+# for i in range(Nsize):
+#     xi_save_loc = path + "xi_" + str(N[i]) + ".txt"
+#     np.savetxt(xi_save_loc, prior_masses[i])
 
-    lhoods_save_loc = path + "lhoods_" + str(N[i]) + ".txt"
-    np.savetxt(lhoods_save_loc, likelihoods[i])
+#     lhoods_save_loc = path + "lhoods_" + str(N[i]) + ".txt"
+#     np.savetxt(lhoods_save_loc, likelihoods[i])
 
 
-# Plotting
-plt.figure(1)
-plt.boxplot(results, labels=N, showfliers=False)
-plt.xlabel("Live points")
-plt.ylabel("Evidence")
-plt.title("Evidence distribution for different number of live points.")
+# # Plotting
+# plt.figure(1)
+# plt.boxplot(results, labels=N, showfliers=False)
+# plt.xlabel("Live points")
+# plt.ylabel("Evidence")
+# plt.title("Evidence distribution for different number of live points.")
 
-plt.figure(2)
-for i in range(1,Nsize,2):
-    plt.plot(prior_masses[i], likelihoods[i], label="N = "+str(N[i]))
-plt.legend()
-plt.xscale('log')
-plt.xlabel('Prior mass')
-plt.ylabel('Likelihood')
+# plt.figure(2)
+# for i in range(1,Nsize,2):
+#     plt.plot(prior_masses[i], likelihoods[i], label="N = "+str(N[i]))
+# plt.legend()
+# plt.xscale('log')
+# plt.xlabel('Prior mass')
+# plt.ylabel('Likelihood')
 
-plt.show()
+# plt.show()
