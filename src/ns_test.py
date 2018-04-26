@@ -127,7 +127,7 @@ def NestedSampling(N, priorPPF, logL, iterations=50, tol=1e-2):
     """
     evidences = []
     for i in range(iterations):
-        # Initial sampling limits
+        print("N = {} \t iteration = {}/{}".format(N, i+1,iterations))
 
         # Definition of variables and objects
         N_MAX = 50000 # Maximum samples
