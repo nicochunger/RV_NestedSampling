@@ -7,17 +7,13 @@ import matplotlib.pyplot as plt
 import sys
 import copy
 import ns_library as ns
-import scipy.stats as st
+from scipy.stats import norm
 
 path = "../data/spectral_lines.txt"
 data = np.loadtxt(path, delimiter=" ")
 
 channel = data[:,0]
 signal = data[:,1]
-
-# Minimun and maximum values for the parameter
-# Tmin = 0.1
-# Tmax = 100
 
 # --------------------- Function definitions -----------------------------
 def model(T, nu, nu0=37, sigmaL=2.0):
@@ -78,10 +74,9 @@ def bimodal(loc1, sigma1, loc2, sigma2):
 
     Returns a single variable function with the chosen bimodal distribution."""
     def foo(x):
-        return np.log(st.norm.pdf(x, loc1, sigma1) + st.norm.pdf(x, loc2, sigma2))
+        return np.log(norm.pdf(x, loc1, sigma1) + norm.pdf(x, loc2, sigma2))
 
     return foo
-
 # --------------------------------------------------------------------------
 
 # npts = 5000
@@ -90,15 +85,6 @@ def bimodal(loc1, sigma1, loc2, sigma2):
 # pdf = np.array([ns.Uniform(t, Tmin, Tmax) for t in T])
 # lanaly = np.array([Likelihood(t) for t in T]) * ns.Uniform(0, Tmin, Tmax)
 
-# TODO implement analytic CDF for Uniform
-#cdf = ns.CDF(pdf, T)
-# ppf = bimodal(3, 7, 0.3, 0.3)
-
-# x = np.linspace(0,1,1000)
-# dist = cdf(x)
-# plt.figure()
-# plt.plot(x, dist)
-# plt.show()
 
 # ------------------- Nested Sampling algorithm ----------------------------
 def NestedSampling(N, priorPPF, logL, iterations=50, tol=1e-2):
@@ -130,7 +116,7 @@ def NestedSampling(N, priorPPF, logL, iterations=50, tol=1e-2):
         print("N = {} \t iteration = {}/{}".format(N, i+1,iterations))
 
         # Definition of variables and objects
-        N_MAX = 50000 # Maximum samples
+        N_MAX = 20*N # Maximum samples
         Obj = [] # List of active objects
         Samples = [] # All Samples
         xi = [1] # Prior mass points (inicially 1)
@@ -204,11 +190,11 @@ def NestedSampling(N, priorPPF, logL, iterations=50, tol=1e-2):
         # Plotting of solution
         xi = np.array(xi[:-2], dtype=float)
         lvector = np.array([np.exp(obj.logLhood) for obj in Samples], dtype=float)
-        # --------------------------------------------------------------------------
 
 
     print("Average evidence for N={} and {} iterations: {}".format(N,iterations,np.mean(evidences)))
     return np.array(evidences), xi, lvector
+# --------------------------------------------------------------------------
 
 # # Plot of data
 #plt.figure()

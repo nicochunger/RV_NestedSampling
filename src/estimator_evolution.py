@@ -21,9 +21,9 @@ pdf = pdf = np.array([Uniform(t, Tmin, Tmax) for t in T])
 cdf = CDF(pdf, T)
 
 # Number of live points to be analized
-Nmin = 6000
+Nmin = 7000
 Nmax = 7001
-step = 1000
+step = 2
 N = np.arange(Nmin, Nmax, step)
 Nsize = len(N)
 
@@ -62,12 +62,12 @@ for i in range(Nsize):
     np.savetxt(lhoods_save_loc, likelihoods[i])
 
 
-# Plotting
-plt.figure(1)
-plt.boxplot(results, labels=N, showfliers=False)
-plt.xlabel("Live points")
-plt.ylabel("Evidence")
-plt.title("Evidence distribution for different number of live points.")
+# # Plotting
+# plt.figure(1)
+# plt.boxplot(results, labels=N, showfliers=False)
+# plt.xlabel("Live points")
+# plt.ylabel("Evidence")
+# plt.title("Evidence distribution for different number of live points.")
 
 # plt.figure(2)
 # for i in range(1,Nsize,2):
@@ -77,4 +77,4 @@ plt.title("Evidence distribution for different number of live points.")
 # plt.xlabel('Prior mass')
 # plt.ylabel('Likelihood')
 
-plt.show()
+# plt.show()

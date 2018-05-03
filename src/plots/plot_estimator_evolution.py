@@ -36,7 +36,10 @@ N = np.append(N, [2500, 3000, 4000, 5000])
 
 # Distribution of N
 results500 = np.loadtxt(path + "iter500/results_300_501_200.txt")
-N500 = [300, 500]
+n1000 = np.loadtxt(path + "iter500/results_1000_1001_1000.txt")
+n1000 = np.reshape(n1000, (1, 500))
+results500 = np.append(results500, n1000, axis=0)
+N500 = [300, 500, 1000]
 # Gaussian model
 def gauss(x, *p):
     A, mu, sigma = p
@@ -44,22 +47,22 @@ def gauss(x, *p):
 
 p0 = [4, 1.0e-38, 1.0e-38]
 
-# Use of Freedman–Diaconis rule to choose bin size
-IQR = iqr(results500, axis=1) # Interquartile range
-binSize = 2 * (IQR / len(results500[0])**(1./3))
-nBins = np.divide(np.max(results500, axis=1) - np.min(results500, axis=1), binSize)
-nBins = nBins.astype(int)
 # Plot
-f, ax = plt.subplots(2, 1, sharex=True)
-for i in range(2):
-    hist, bin_edges, patches = ax[i].hist(results500[i], bins='fd') #nBins[i])
-    bin_centres = (bin_edges[:-1] + bin_edges[1:])/2
-    coeff, var_matrix = curve_fit(gauss, bin_centres, hist, p0=p0)
+f, ax = plt.subplots(len(N500), 1, sharex=True)
+for i in range(len(N500)):
+    hist, bin_edges, patches = ax[i].hist(results500[i], bins='fd', label="Histogram of data") #nBins[i])
+    bin_centres = (bin_edges[:-1] + bin_edges[1:])/2 # Calculate bin centers
+    coeff, var_matrix = curve_fit(gauss, bin_centres, hist, p0=p0) # Fit data
+    print("Parameters [A, mu, sigma]: " + str(coeff))
+    print("Errors for parameters: " + str(np.sqrt(np.diag(var_matrix)))) # Standard deviation of each coefficient
+    print("\n")
     x = np.linspace(min(results500[i]), max(results500[i]), 200)
-    hist_fit = gauss(x, *coeff)   
-    ax[i].plot(x, hist_fit, label='Fitted data')
+    hist_fit = gauss(x, *coeff)
+    ax[i].axvline(x=1.131e-38, color='xkcd:grey', label="Analytic result")
+    ax[i].plot(x, hist_fit, label='Gaussian fit')
     ax[i].set_title("Distribution of results for N = {}".format(N500[i]))
     
-plt.xlabel("Evidence")
-plt.ylabel("Ocurrences")
+plt.xlabel("Evidence", fontsize=14)
+ax[1].set_ylabel("Ocurrences", fontsize=14)
+ax[0].legend()
 plt.show()
