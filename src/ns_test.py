@@ -24,16 +24,32 @@ def model(T, nu, nu0=37, sigmaL=2.0):
 def Likelihood(T, sigma=1.0):
     """ Analytic expression of the Likelihhod for the spectral lines problem."""
     N = len(data)
-    exponent = -1 * np.sum((signal - model(T, channel))**2) / (2*sigma**2)
-    lh = (2*np.pi)**(-float(N)/2.0) * sigma**(-float(N)) * np.exp(exponent)
-    return lh
+    Tlen = len(T)
+    if Tlen == 1:
+        exponent = -1 * np.sum((signal - model(T, channel))**2) / (2*sigma**2)
+        lh = (2*np.pi)**(-float(N)/2.0) * sigma**(-float(N)) * np.exp(exponent)
+        return lh
+    else:
+        lh = np.zeros(Tlen)
+        for i in range(Tlen):
+            exponent = -1 * np.sum((signal - model(T[i], channel))**2) / (2*sigma**2)
+            lh[i] = (2*np.pi)**(-float(N)/2.0) * sigma**(-float(N)) * np.exp(exponent)
+        return lh
 
 def logLikelihood(T, sigma=1.0):
-    """ Analytic expression of the Likelihhod for the spectral lines problem."""
+    """ Analytic expression of the log of the Likelihhod for the spectral lines problem."""
     N = len(data)
-    exponent = -1 * np.sum((signal - model(T, channel))**2) / (2*sigma**2)
-    logL = (-N/2.)*np.log(2*np.pi) - N*np.log(sigma) + exponent
-    return logL
+    Tlen = len(T)
+    if Tlen == 1:
+        exponent = -1 * np.sum((signal - model(T, channel))**2) / (2*sigma**2)
+        logL = (-N/2.)*np.log(2*np.pi) - N*np.log(sigma) + exponent
+        return logL
+    else:
+        logL = np.zeros(Tlen)
+        for i in range(Tlen):
+            exponent = -1 * np.sum((signal - model(T[i], channel))**2) / (2*sigma**2)
+            logL[i] = (-N/2.)*np.log(2*np.pi) - N*np.log(sigma) + exponent
+        return logL
 
 class ActiveObj:
     def __init__(self, ppf, logL):
