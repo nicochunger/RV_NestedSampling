@@ -9,7 +9,6 @@ from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 
 
-
 # Likelihood test
 T = np.linspace(0.1, 100, 200)
 Lhood = Likelihood(T)
@@ -33,7 +32,7 @@ sigma = coeff[2]
 print(coeff)
 
 # Prior mass
-xi = np.logspace(-2, 0, 200)
+xi = np.logspace(-4, 0, 200)
 
 # Inverse error function
 u = erfinv(xi)
@@ -41,8 +40,10 @@ u = erfinv(xi)
 x = 2*u*sigma + mu
 L = Likelihood(x)
 
-plt.plot(xi, L, '.')
+plt.plot(xi, L, '-')
 plt.xscale('log')
+plt.xlabel("Prior mass")
+plt.ylabel("Likelihood")
 plt.show()
 
 

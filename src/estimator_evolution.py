@@ -60,21 +60,3 @@ for i in range(Nsize):
 
     lhoods_save_loc = path + "lhoods_" + str(N[i]) + ".txt"
     np.savetxt(lhoods_save_loc, likelihoods[i])
-
-
-# # Plotting
-# plt.figure(1)
-# plt.boxplot(results, labels=N, showfliers=False)
-# plt.xlabel("Live points")
-# plt.ylabel("Evidence")
-# plt.title("Evidence distribution for different number of live points.")
-
-# plt.figure(2)
-# for i in range(1,Nsize,2):
-#     plt.plot(prior_masses[i], likelihoods[i], label="N = "+str(N[i]))
-# plt.legend()
-# plt.xscale('log')
-# plt.xlabel('Prior mass')
-# plt.ylabel('Likelihood')
-
-# plt.show()

@@ -42,7 +42,7 @@ plt.title("Standard deviation for each numer of live points", fontsize='15')
 # ---------------------------------------------------------------------
 
 # -------------- Mean and median evidences ----------------------------
-plt.figure(3)
+plt.figure(2)
 avg = np.mean(results, axis=0)
 med = np.median(results, axis=0)
 plt.plot(N, avg, 'k.-', label="Mean evidence")
@@ -52,6 +52,23 @@ plt.xlabel("Live points")
 plt.ylabel("Evidence")
 plt.legend()
 # ----------------------------------------------------------------------
+
+# ---------------------- L vs Xi --------------------------------------
+# N = 200
+priormass200 = np.loadtxt(path + "xi_200.txt")
+lhoods200 = np.loadtxt(path + "lhoods_200.txt")
+# N = 7000
+priormass7000 = np.loadtxt(path + "xi_7000.txt")
+lhoods7000 = np.loadtxt(path + "lhoods_7000.txt")
+
+plt.figure(3)
+plt.plot(priormass200, lhoods200, label="N = 200")
+plt.plot(priormass7000, lhoods7000, label="N = 7000")
+plt.legend()
+plt.xscale('log')
+plt.xlabel('Prior mass')
+plt.ylabel('Likelihood')
+# ---------------------------------------------------------------------
 
 # ------------------ Distribution of N --------------------------------
 results500 = np.loadtxt(path + "iter500/results_300_501_200.txt")
