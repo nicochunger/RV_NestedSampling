@@ -42,9 +42,9 @@ def prior(hypercube):
     return theta
 
 settings = PolyChordSettings(nDims, nDerived)
-settings.nlive = 500
+settings.nlive = 700
 settings.file_root = 'gregory'
-settings.do_clustering = True
+settings.do_clustering = False
 settings.read_resume = False
 
 output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
