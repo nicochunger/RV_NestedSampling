@@ -6,25 +6,25 @@ Evidence estimates:
 Global evidence:
 ----------------
 
-log(Z)       =  -0.873765161757332E+002 +/-   0.746795571206501E-001
+log(Z)       =  -0.874434351221066E+002 +/-   0.755502145699520E-001
 
 
 Local evidences:
 ----------------
 
-log(Z_ 1)  =  -0.873765161757332E+002 +/-   0.746795571204598E-001
+log(Z_ 1)  =  -0.874434351221066E+002 +/-   0.755502145697639E-001
 
 
 Run-time information:
 ---------------------
 
  ncluster:          0 /       1
- nposterior:     8567
- nequals:        1482
- ndead:          8567
+ nposterior:     8613
+ nequals:        1423
+ ndead:          8613
  nlive:             0
- nlike:        160894
- <nlike>:        0.00   (    0.00 per slice )
+ nlike:        161327
+ <nlike>:       -0.00   (   -0.00 per slice )
 
 
 Dim No.       Mean        Sigma

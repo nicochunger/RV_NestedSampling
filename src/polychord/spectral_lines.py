@@ -48,6 +48,17 @@ settings.do_clustering = False
 settings.read_resume = False
 
 output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
-paramnames = [('p%i' % i, r'\theta_%i' % i) for i in range(nDims)]
-paramnames += [('r*', 'r')]
-output.make_paramnames_files(paramnames)
+
+try:
+    import getdist.plots
+    import matplotlib.pyplot as plt
+    #plt.close('all')
+    posterior = output.posterior
+    g = getdist.plots.getSubplotPlotter()
+    #print("hola")
+    g.triangle_plot(posterior, filled=True)
+    plt.show()
+except ImportError:
+    print("Install matplotlib and getdist for plotting examples")
+
+    
