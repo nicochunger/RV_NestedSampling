@@ -15,26 +15,22 @@ nDerived = 0
 Tmin = 0
 Tmax = 30
 
-def PLUS(x, y):
-    """ Logarithmic sum. """
-    if x > y:
-        return x + np.log(1+np.exp(y-x))
-    else:
-        return y + np.log(1+np.exp(x-y))
-
 def logLikelihood(theta):
     """ log Likelihood of this toy bimodal example. """
     # loc1 = 3
     # mean1 = [loc1] * nDims
-    # mean1 = [3, 3]
     # rv1 = multivariate_normal(mean1)
-    # #result = rv1.logpdf(theta)
+    # # result = rv1.logpdf(theta)
 
     # # Multimodal
     # loc2 = 12
     # mean2 = [loc2] * nDims
     # rv2 = multivariate_normal(mean2)
+    # # loc3 = 21
+    # # mean3 = [loc3] * nDims
+    # # rv3 = multivariate_normal(mean3)
     # result = np.logaddexp(rv1.logpdf(theta), rv2.logpdf(theta))
+    # result = np.logaddexp(result, rv3.logpdf(theta))
 
     mean = [[3,3], [3,12], [12,3], [12,12]]
     rv1 = multivariate_normal(mean[0])
@@ -57,14 +53,18 @@ def prior(hypercube):
     return theta
 
 # Define PolyChord settings
-settings = PolyChordSettings(nDims, nDerived)
+settings = PolyChordSettings(nDims, nDerived, )
 settings.do_clustering = True
-settings.nlive = 100
+settings.nlive = 200
 settings.file_root = 'multidimensional'
 settings.read_resume = False
+#settings.num_repeats = nDims * 5
 
 # Run PolyChord
 output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
+
+print(output.logZs)
+print(output.logZerrs)
 
 
 try:
