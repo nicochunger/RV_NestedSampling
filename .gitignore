@@ -1,3 +1,6 @@
+# Ignore output from PolyChord
+chains/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod~]
