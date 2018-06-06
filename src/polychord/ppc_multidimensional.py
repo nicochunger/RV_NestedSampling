@@ -7,40 +7,60 @@ from PyPolyChord.settings import PolyChordSettings
 from PyPolyChord.priors import UniformPrior
 import numpy as np
 from scipy.stats import norm, multivariate_normal
+from scipy.misc import logsumexp
 import matplotlib.pyplot as plt
+import time
 
-nDims = 2
+# Initialize start time to measure run time
+start = time.time()
+
+# Number of dimensions and derived parameters
+nDims = 5
 nDerived = 0
 
-Tmin = 0
-Tmax = 30
+# Min and max values for all parameters (in this simple case)
+Tmin = -60
+Tmax = 60
 
 def logLikelihood(theta):
-    """ log Likelihood of this toy bimodal example. """
-    # loc1 = 3
-    # mean1 = [loc1] * nDims
-    # rv1 = multivariate_normal(mean1)
-    # # result = rv1.logpdf(theta)
+    """ log Likelihood of this toy multiimodal example. """
 
-    # # Multimodal
-    # loc2 = 12
-    # mean2 = [loc2] * nDims
-    # rv2 = multivariate_normal(mean2)
-    # # loc3 = 21
-    # # mean3 = [loc3] * nDims
-    # # rv3 = multivariate_normal(mean3)
-    # result = np.logaddexp(rv1.logpdf(theta), rv2.logpdf(theta))
-    # result = np.logaddexp(result, rv3.logpdf(theta))
+    #mean = [[3,3], [3,12], [12,3], [12,12]]
+    nModes = 10
+    mean = []
+    currDim = -1
+    for i in range(nModes):
+        mode = np.zeros([nDims])
+        if i % 2 == 0:
+            currDim += 1
+            currDim = currDim % nDims
+            
+        loop = int(i / (nDims*2)) + 1
+        pos = loop * (-1)**i * 10
+        mode[currDim] = pos
+        mean.append(mode)
 
-    mean = [[3,3], [3,12], [12,3], [12,12]]
-    rv1 = multivariate_normal(mean[0])
-    rv2 = multivariate_normal(mean[1])
-    rv3 = multivariate_normal(mean[2])
-    rv4 = multivariate_normal(mean[3])
+    # # Add 0's to the means if nDims > 2 for every new dimension
+    # if nDims > 2:
+    #     for i in mean:
+    #         for _ in range(nDims-2):
+    #             i.append(0)
 
-    result1 = np.logaddexp(rv1.logpdf(theta), rv2.logpdf(theta))
-    result2 = np.logaddexp(rv3.logpdf(theta), rv4.logpdf(theta))
-    result = np.logaddexp(result1, result2)
+    rvs = []
+    for i in range(nModes):
+        rvs.append(multivariate_normal(mean[i]).logpdf(theta))
+
+    result = logsumexp(rvs)
+
+
+    # rv1 = multivariate_normal(mean[0])
+    # rv2 = multivariate_normal(mean[1])
+    # rv3 = multivariate_normal(mean[2])
+    # rv4 = multivariate_normal(mean[3])
+
+    # result1 = np.logaddexp(rv1.logpdf(theta), rv2.logpdf(theta))
+    # result2 = np.logaddexp(rv3.logpdf(theta), rv4.logpdf(theta))
+    # result = np.logaddexp(result1, result2)
     
     return result, []
 
@@ -55,7 +75,7 @@ def prior(hypercube):
 # Define PolyChord settings
 settings = PolyChordSettings(nDims, nDerived, )
 settings.do_clustering = True
-settings.nlive = 200
+settings.nlive = 25*nDims
 settings.file_root = 'multidimensional'
 settings.read_resume = False
 #settings.num_repeats = nDims * 5
@@ -66,6 +86,8 @@ output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
 print(output.logZs)
 print(output.logZerrs)
 
+end = time.time()
+print(f'Total run time was: {end-start}')
 
 try:
     import getdist.plots
