@@ -10,17 +10,17 @@ def trueanomaly(M, ecc, method='Newton', niterationmax=1e4):
     if not isinstance(M, float):
         E = M
     else:
-        E = n.array([M,])
+        E = np.array([M,])
 
     Eo = M
-    ecc = n.where(ecc > 0.99, 0.99, ecc)
+    ecc = np.where(ecc > 0.99, 0.99, ecc)
 
     niteration = 0
-    while n.linalg.norm(E - Eo, ord=1) > 1e-5 or niteration==0:
+    while np.linalg.norm(E - Eo, ord=1) > 1e-5 or niteration==0:
         Eo = E
 
-        ff = E - ecc*n.sin(E) - M
-        dff = 1 - ecc*n.cos(E)
+        ff = E - ecc*np.sin(E) - M
+        dff = 1 - ecc*np.cos(E)
 
         if method == 'Newton':
             # Use Newton method
@@ -28,12 +28,12 @@ def trueanomaly(M, ecc, method='Newton', niterationmax=1e4):
 
         elif method == 'Halley':
             # Use Halley's parabolic method
-            d2ff = ecc*n.sin(E)
+            d2ff = ecc*np.sin(E)
         
             discr = dff **2 - 2 * ff * d2ff
 
-            E = n.where((discr < 0), Eo - dff / d2ff,
-                         Eo - 2*ff / (dff + n.sign(dff) * n.sqrt(discr))
+            E = np.where((discr < 0), Eo - dff / d2ff,
+                         Eo - 2*ff / (dff + np.sign(dff) * np.sqrt(discr))
                      )
 
         # Increase iteration number; if above limit, break with exception.
@@ -42,8 +42,8 @@ def trueanomaly(M, ecc, method='Newton', niterationmax=1e4):
             raise RuntimeError('Eccentric anomaly comoputation not converged.')
         
     # Compute true anomaly
-    nu = 2. * n.arctan2(n.sqrt(1. + ecc) * n.sin(E / 2.),
-                        n.sqrt(1. - ecc) * n.cos(E / 2.)
+    nu = 2. * np.arctan2(np.sqrt(1. + ecc) * np.sin(E / 2.),
+                        np.sqrt(1. - ecc) * np.cos(E / 2.)
                         )
     return nu
 
@@ -88,7 +88,7 @@ def modelk(pardict, time, planet='1'):
 
     ###
     # SESIN SECOS ML0
-    if 'planet{}_secos'.format(planet) in pardict:
+    if f'planet{planet}_secos' in pardict:
         secos = pardict['planet{}_secos'.format(planet)]
         sesin = pardict['planet{}_sesin'.format(planet)]
         ecc = secos**2 + sesin**2

@@ -3,7 +3,7 @@ A module implementing different likelihood functions.
 """
 
 import numpy as np
-import scipy.linalg
+from scipy.linalg import cho_factor, cho_solve
 
 from math import pi, log
 
@@ -17,12 +17,12 @@ def lnlike_gaussian(residuals, K):
     """
 
     # Cholesky factor of the covariance
-    factor, flag = scipy.linalg.cho_factor(K, overwrite_a=False)
+    factor, flag = cho_factor(K, overwrite_a=False)
 
     # Determinant
     lndet = 2 * np.sum(np.log(np.diag(factor)))
 
-    alpha = scipy.linalg.cho_solve((factor, flag), residuals)
+    alpha = cho_solve((factor, flag), residuals)
 
     # TODO check implementation for multi-residuals using np.diag.
     # return -0.5 * (lndet + np.diag(np.dot(residuals.T, alpha)))
@@ -53,11 +53,11 @@ def lnlike_gaussian_marginalisedjitter(residuals, xnodes, wnodes, chofactors,
     """
     lnlike = np.zeros(len(xnodes))
 
-    for i, x in enumerate(xnodes):
+    for i, _ in enumerate(xnodes):
         # Compute value of likelihood and prior in nodes.
 
         # Solve equation to get K^{-1} r
-        alpha = scipy.linalg.cho_solve(chofactors[i], residuals)
+        alpha = cho_solve(chofactors[i], residuals)
 
         # Compute likelihood
         lnlike[i] = -0.5 * np.dot(residuals.T, alpha)
