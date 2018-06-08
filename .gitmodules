@@ -1,0 +1,3 @@
+[submodule "MCMC"]
+	path = src/MCMC
+	url = https://github.com/exord/MCMC
