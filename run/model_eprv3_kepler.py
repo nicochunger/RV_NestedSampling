@@ -47,7 +47,7 @@ def trueanomaly(M, ecc, method='Newton', niterationmax=1e4):
                         )
     return nu
 
-def preprocess(rundict, initdict, datadict, priordict, fixeddict):
+def preprocess(datadict,):
     """
     Compute covariance matrix of data
     """
