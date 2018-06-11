@@ -9,7 +9,7 @@ import os
 import pickle
 import numpy as np
 
-datapath = os.path.join(os.getenv('HOME'), 'run/data')
+datapath = os.path.join(os.getenv('HOME'), 'tesis/codigo/data')
 
 #--------------------
 # Dictionaries 
@@ -29,7 +29,7 @@ rundict = {
 #-------------------
 datadict = {
     'eprv':
-    {'datafile':  os.path.join(datapath, target, 'rvs_0001_dace.txt'),
+    {'datafile':  os.path.join(datapath, 'rvs_0001.txt'),
      'instrument': 'HARPS',
      'mask': 'G2',
      'type': 'RV',

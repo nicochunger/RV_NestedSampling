@@ -2,7 +2,7 @@ import imp
 import numpy as np
 import pandas as pd
 
-from MCMC import priors
+import priors
 
 def read_config(configfile):
     """
@@ -122,10 +122,13 @@ def read_data(datadict):
         try:
             sep = datadict[inst]['sep']
         except KeyError:
-            sep = '\t' 
+            #sep = '\t'
+            sep = ' ' 
         
         # Read rdb file
+        # data = pd.read_csv(datadict[inst]['datafile'], sep=sep,
+        #                    comment='#', skiprows=[1,])
         data = pd.read_csv(datadict[inst]['datafile'], sep=sep,
-                           comment='#', skiprows=[1,])
+                           comment='#', header=None, names=['jbl', 'vrad', 'svrad'], usecols=[0,1,2])
         datadict[inst]['data'] = data
     

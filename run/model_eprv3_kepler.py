@@ -53,7 +53,7 @@ def preprocess(datadict,):
     """
     covdict = {}
     for inst in datadict.keys():
-        t = datadict[inst]['data']['jdb'].values
+        t = datadict[inst]['data']['jbl'].values
         dt = t[:, None] - t[None, :]
 
         # Compute red part covariance according to prescription
@@ -159,7 +159,7 @@ def lnlike(param, parnames, fixedpardict, data, covdict, **kwargs):
     lnlike = np.zeros(len(data))
     
     for i, instrument in enumerate(data.keys()):
-        t = data[instrument]['data']['jdb'].values
+        t = data[instrument]['data']['jbl'].values
         y = data[instrument]['data']['vrad'].values
         ey = data[instrument]['data']['svrad'].values
 
