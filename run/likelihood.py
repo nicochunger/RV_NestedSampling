@@ -24,9 +24,13 @@ def lnlike_gaussian(residuals, K):
 
     alpha = cho_solve((factor, flag), residuals)
 
+    # Constant contribution
+    nobs = np.shape(K)[0]
+    cte = nobs * np.log(2*np.pi)
+
     # TODO check implementation for multi-residuals using np.diag.
     # return -0.5 * (lndet + np.diag(np.dot(residuals.T, alpha)))
-    return -0.5 * (lndet + np.dot(residuals.T, alpha))
+    return -0.5 * (lndet + np.dot(residuals.T, alpha) + cte)
 
 
 def lnlike_gaussian_invk(residuals, invk, lndet):
