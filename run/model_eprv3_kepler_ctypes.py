@@ -1,90 +1,30 @@
 import numpy as np
 from scipy.linalg import cho_factor
 import warnings
+import ctypes as C
+
+CLIB = C.CDLL('/home/nunger/tesis/codigo/run/trueanomaly.so')
+CLIB.trueanomaly.argtypes = [C.c_float, C.c_float, C.c_int]
+CLIB.trueanomaly.restype = C.c_float
 
 from math import pi
 
 import likelihood
 
-def trueanomaly(M, ecc, method='Newton', niterationmax=1e4):
+def trueanomaly(M, ecc, niterationmax=1e4):
 
-    # FIXME this code is too slow. Fix by converging each element individually
-
-    if not isinstance(M, float):
-        E = M
-    else:
-        E = np.array([M,])
-
-    Eo = M
     ecc = np.where(ecc > 0.99, 0.99, ecc)
+    nu = np.zeros(len(M))
+    tol = 1e-4
 
-    # print(f'M shape = {np.shape(M)}')
-    # print(f'ecc = {ecc}')
-
-    niteration = 0
-    #while np.linalg.norm(E - Eo, ord=1) > 1e-5 or niteration==0:
-
-    # #--------------------------------------------------------------------
-    # while np.any(np.abs(E-Eo)>1e-5) or niteration==0:
-    #     # FIXME quick idea is to check if it converged only every 100 steps
-    #     # This reduces drastically the amount of times np.any has to be called.
-    #     for _ in range(100):
-    #         Eo = E
-
-    #         ff = E - ecc*np.sin(E) - M
-    #         dff = 1 - ecc*np.cos(E)
-
-    #         if method == 'Newton':
-    #             # Use Newton method
-    #             E = Eo - ff / dff
-
-    #         elif method == 'Halley':
-    #             # Use Halley's parabolic method
-    #             d2ff = ecc*np.sin(E)
-            
-    #             discr = dff **2 - 2 * ff * d2ff
-
-    #             E = np.where((discr < 0), Eo - dff / d2ff,
-    #                         Eo - 2*ff / (dff + np.sign(dff) * np.sqrt(discr))
-    #                     )
-
-    #     # Increase iteration number; if above limit, break with exception.
-    #     niteration += 100
-    #     if niteration >= niterationmax:
-    #         raise RuntimeError('Eccentric anomaly comoputation not converged.')
-    # #-------------------------------------------------------------------------
+    # print(f'M = {M} \t type of M[0] = {type(M[0])}')
+    # print(f'ecc = {ecc} \t type of ecc = {type(ecc)}')
+    # print(f'itermax = {niterationmax} \t type of itermax = {type(niterationmax)}')
 
     for i in range(len(M)):
-        while np.abs(E[i]-Eo[i])>1e-5 or niteration==0:
-            for _ in range(50):
-                Eo[i] = E[i]
+        # Call C function to calculate true anomaly
+        nu[i] = CLIB.trueanomaly(float(M[i]), float(ecc), int(niterationmax), int(tol))
 
-                ff = E[i] - ecc*np.sin(E[i]) - M[i]
-                dff = 1 - ecc*np.cos(E[i])
-
-                if method == 'Newton':
-                    # Use Newton method
-                    E[i] = Eo[i] - ff / dff
-
-                elif method == 'Halley':
-                    # Use Halley's parabolic method
-                    d2ff = ecc*np.sin(E)
-                
-                    discr = dff **2 - 2 * ff * d2ff
-
-                    E = np.where((discr < 0), Eo - dff / d2ff,
-                                Eo - 2*ff / (dff + np.sign(dff) * np.sqrt(discr))
-                            )
-
-            # Increase iteration number; if above limit, break with exception.
-            niteration += 100
-            if niteration >= niterationmax:
-                raise RuntimeError('Eccentric anomaly comoputation not converged.')
-        
-    # Compute true anomaly
-    nu = 2. * np.arctan2(np.sqrt(1. + ecc) * np.sin(E / 2.),
-                        np.sqrt(1. - ecc) * np.cos(E / 2.)
-                        )
     return nu
 
 def preprocess(datadict,):

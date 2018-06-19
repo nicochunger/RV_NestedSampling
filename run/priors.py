@@ -41,8 +41,9 @@ class uniform_gen(rv_continuous):
     def _cdf(self, x, xmin, xmax):
         return stats.uniform.cdf(x, loc=xmin, scale=xmax - xmin)
 
-    def _ppf(self, q, xmin, xmax):
-        return stats.uniform.ppf(q, loc=xmin, scale=xmax - xmin)
+    def ppf(self, q, xmin, xmax):
+        return xmin + (xmax - xmin)*q
+        #return stats.uniform.ppf(q, loc=xmin, scale=xmax - xmin)
 
 # For backwards compatibility
 class uniform(uniform_gen):
@@ -69,12 +70,13 @@ class jeffreys_gen(rv_continuous):
         cdf = n.where((x < xmax), cdf, 1.0)
         return cdf
 
-    def _ppf(self, q, xmin, xmax):
-        dx = (xmax - xmin)*step
-        x = n.arange(xmin, xmax + dx, dx)
-        cdf = self._cdf(x, xmin, xmax)
-        # Interpolate the _inverse_ CDF
-        return interpolate.interp1d(cdf, x)(q)
+    def ppf(self, q, xmin, xmax):
+        return xmin * (float(xmax)/xmin) ** q
+        # dx = (xmax - xmin)*step
+        # x = n.arange(xmin, xmax + dx, dx)
+        # cdf = self._cdf(x, xmin, xmax)
+        # # Interpolate the _inverse_ CDF
+        # return interpolate.interp1d(cdf, x)(q)
 
 # For backwards compatibility
 class jeffreys(jeffreys_gen):
@@ -105,12 +107,13 @@ class modjeff_gen(rv_continuous):
         cdf = n.where(x < xmax, cdf, 1.0)
         return cdf
 
-    def _ppf(self, q, x0, xmax):
-        dx = xmax*step
-        x = n.arange(0, xmax + dx, dx)
-        cdf = self._cdf(x, x0, xmax)
-        # Interpolate the _inverse_ CDF
-        return interpolate.interp1d(cdf, x)(q)
+    def ppf(self, q, x0, xmax):
+        return x0*((1+float(xmax)/x0) ** q) - x0
+        # dx = xmax*step
+        # x = n.arange(0, xmax + dx, dx)
+        # cdf = self._cdf(x, x0, xmax)
+        # # Interpolate the _inverse_ CDF
+        # return interpolate.interp1d(cdf, x)(q)
    
     
 class binorm_gen(rv_continuous):

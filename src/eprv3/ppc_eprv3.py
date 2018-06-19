@@ -8,7 +8,7 @@ path = '/home/nunger/tesis/codigo/run/'
 sys.path.append(path)
 
 # Dependencies
-from model_eprv3_kepler import lnlike, lnprior, preprocess
+from model_eprv3_kepler_ctypes import lnlike, lnprior, preprocess
 import config
 import numpy as np
 import time
@@ -29,7 +29,7 @@ covdict = preprocess(datadict)[0] # Covariance dictionary
 parnames = list(initial_values.keys()) # Parameter names
 
 nDims = 2 + (nplanets * 5) # Number of parameters to fit
-assert nDims == len(parnames), 'Error in number of parameters'
+assert nDims == len(parnames), "Number of parameters and dimensions don't match"
 nDerived = 0
 
 def logLikelihood(theta):
@@ -52,12 +52,12 @@ def prior(hypercube):
 # Define PolyChord settings
 settings = PolyChordSettings(nDims, nDerived, )
 settings.do_clustering = False
-settings.nlive = 25*nDims
+settings.nlive = 20*nDims
 settings.file_root = modelpath[12:-3]
 settings.read_resume = False
-#settings.num_repeats = nDims * 5
+settings.num_repeats = nDims * 3
 settings.feedback = 1
-settings.precision_criterion = 0.001
+settings.precision_criterion = 0.01
 
 # Run PolyChord
 output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
@@ -79,7 +79,7 @@ result = np.zeros(6+nDims)
 result[0] = Dt # Run time
 result[1] = output.logZ # Total evidence in log_e
 result[2] = output.logZerr # Error for the evidence
-result[3] = output.logZ*0.43429 # Total evidence in log_10
+result[3] = output.logZ * np.log10(np.e) # Total evidence in log_10
 result[4] = settings.nlive # Number of live points
 result[5] = settings.precision_criterion # Precision crtierion
 result[6:] = np.mean(output.posterior.samples[-500:], axis=0) # Average for each parameter from the posterior
@@ -90,27 +90,30 @@ for i in range(nDims):
     header += parnames[i]
     if i < nDims-1:
         header += ' ' # Add comma after each parameter, except the last one
+
+dataset = datadict['eprv']['datafile'][-8:-4]
+filename = f'results{dataset}_{nplanets}.txt'
 try:
     # Append results to file
-    f = np.loadtxt(f'results{nplanets}.txt')
+    f = np.loadtxt(filename)
     if len(np.shape(f)) == 1:
         f = np.reshape(f, (1, 6+nDims))
     results = np.append(f, result, axis=0)
-    np.savetxt(f'results{nplanets}.txt',results, header=header, fmt='%.8e')
+    np.savetxt(filename,results, header=header, fmt='%.8e')
 except:
     # File does not exist, must create it first
-    np.savetxt(f'results{nplanets}.txt', result, header=header, fmt='%.8e')
+    np.savetxt(filename, result, header=header, fmt='%.8e')
 
-if nDims < 6:
-    try:
-        import getdist.plots
-        import matplotlib.pyplot as plt
-        posterior = output.posterior
-        g = getdist.plots.getSubplotPlotter()
-        g.triangle_plot(posterior, filled=True)
-        plt.show()
-    except ImportError:
-        print("Install matplotlib and getdist for plotting examples")
+# if nDims < 8:
+#     try:
+#         import getdist.plots
+#         import matplotlib.pyplot as plt
+#         posterior = output.posterior
+#         g = getdist.plots.getSubplotPlotter()
+#         g.triangle_plot(posterior, filled=True)
+#         plt.show()
+#     except ImportError:
+#         print("Install matplotlib and getdist for plotting examples")
 
 
 
