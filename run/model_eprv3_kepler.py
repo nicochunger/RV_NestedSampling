@@ -21,66 +21,67 @@ def trueanomaly(M, ecc, method='Newton', niterationmax=1e4):
     # print(f'M shape = {np.shape(M)}')
     # print(f'ecc = {ecc}')
 
-    niteration = 0
-    #while np.linalg.norm(E - Eo, ord=1) > 1e-5 or niteration==0:
+    #niteration = 0
 
-    # #--------------------------------------------------------------------
+    #--------------------------------------------------------------------
     # while np.any(np.abs(E-Eo)>1e-5) or niteration==0:
     #     # FIXME quick idea is to check if it converged only every 100 steps
     #     # This reduces drastically the amount of times np.any has to be called.
-    #     for _ in range(100):
-    #         Eo = E
+    #     #for _ in range(100):
+    #     Eo = E
 
-    #         ff = E - ecc*np.sin(E) - M
-    #         dff = 1 - ecc*np.cos(E)
+    #     ff = E - ecc*np.sin(E) - M
+    #     dff = 1 - ecc*np.cos(E)
 
-    #         if method == 'Newton':
-    #             # Use Newton method
-    #             E = Eo - ff / dff
+    #     if method == 'Newton':
+    #         # Use Newton method
+    #         E = Eo - ff / dff
 
-    #         elif method == 'Halley':
-    #             # Use Halley's parabolic method
-    #             d2ff = ecc*np.sin(E)
-            
-    #             discr = dff **2 - 2 * ff * d2ff
+    #     elif method == 'Halley':
+    #         # Use Halley's parabolic method
+    #         d2ff = ecc*np.sin(E)
+        
+    #         discr = dff **2 - 2 * ff * d2ff
 
-    #             E = np.where((discr < 0), Eo - dff / d2ff,
-    #                         Eo - 2*ff / (dff + np.sign(dff) * np.sqrt(discr))
-    #                     )
+    #         E = np.where((discr < 0), Eo - dff / d2ff,
+    #                     Eo - 2*ff / (dff + np.sign(dff) * np.sqrt(discr))
+    #                 )
 
     #     # Increase iteration number; if above limit, break with exception.
-    #     niteration += 100
+    #     niteration += 1
     #     if niteration >= niterationmax:
     #         raise RuntimeError('Eccentric anomaly comoputation not converged.')
-    # #-------------------------------------------------------------------------
-
+    # print(f'iterations = {niteration}')
+    #-------------------------------------------------------------------------
+    iters = []
     for i in range(len(M)):
+        niteration = 0
         while np.abs(E[i]-Eo[i])>1e-5 or niteration==0:
-            for _ in range(50):
-                Eo[i] = E[i]
+            Eo[i] = E[i]
 
-                ff = E[i] - ecc*np.sin(E[i]) - M[i]
-                dff = 1 - ecc*np.cos(E[i])
+            ff = E[i] - ecc*np.sin(E[i]) - M[i]
+            dff = 1 - ecc*np.cos(E[i])
 
-                if method == 'Newton':
-                    # Use Newton method
-                    E[i] = Eo[i] - ff / dff
+            if method == 'Newton':
+                # Use Newton method
+                E[i] = Eo[i] - ff / dff
 
-                elif method == 'Halley':
-                    # Use Halley's parabolic method
-                    d2ff = ecc*np.sin(E)
-                
-                    discr = dff **2 - 2 * ff * d2ff
+            elif method == 'Halley':
+                # Use Halley's parabolic method
+                d2ff = ecc*np.sin(E)
+            
+                discr = dff **2 - 2 * ff * d2ff
 
-                    E = np.where((discr < 0), Eo - dff / d2ff,
-                                Eo - 2*ff / (dff + np.sign(dff) * np.sqrt(discr))
-                            )
+                E = np.where((discr < 0), Eo - dff / d2ff,
+                            Eo - 2*ff / (dff + np.sign(dff) * np.sqrt(discr))
+                        )
 
             # Increase iteration number; if above limit, break with exception.
-            niteration += 100
+            niteration += 1
             if niteration >= niterationmax:
                 raise RuntimeError('Eccentric anomaly comoputation not converged.')
-        
+        iters.append(niteration)    
+    print(f'mean iterations = {np.mean(iters)}')
     # Compute true anomaly
     nu = 2. * np.arctan2(np.sqrt(1. + ecc) * np.sin(E / 2.),
                         np.sqrt(1. - ecc) * np.cos(E / 2.)

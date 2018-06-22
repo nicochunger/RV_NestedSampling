@@ -9,23 +9,21 @@ float trueanomaly(float M, float ecc, int niterationmax, int tol)
     float E = M;
     float E0 = M;
     float nu;
-    int i,j;
+    int i;
 
     int niteration = 0;
 
     while(abs(E-E0)>tol || niteration==0)
     {
-        for(j=0; j<50; j++)
-        {
-            E0 = E;
+        E0 = E;
 
-            float ff = E - ecc*sin(E) - M;
-            float dff = 1 - ecc*cos(E);
+        float ff = E - ecc*sin(E) - M;
+        float dff = 1 - ecc*cos(E);
 
-            // Use Newton method
-            E = E0 - ff / dff;
-        }
-        niteration+=50;
+        // Use Newton method
+        E = E0 - ff / dff;
+
+        niteration+=1;
         if(niteration>=niterationmax)
             return -1;
     }

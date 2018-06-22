@@ -4,7 +4,7 @@ import warnings
 import ctypes as C
 
 CLIB = C.CDLL('/home/nunger/tesis/codigo/run/trueanomaly.so')
-CLIB.trueanomaly.argtypes = [C.c_float, C.c_float, C.c_int]
+CLIB.trueanomaly.argtypes = [C.c_float, C.c_float, C.c_int, C.c_int]
 CLIB.trueanomaly.restype = C.c_float
 
 from math import pi
@@ -24,6 +24,8 @@ def trueanomaly(M, ecc, niterationmax=1e4):
     for i in range(len(M)):
         # Call C function to calculate true anomaly
         nu[i] = CLIB.trueanomaly(float(M[i]), float(ecc), int(niterationmax), int(tol))
+        if nu[i]==-1:
+            raise RuntimeError("Eccentric anomaly comoputation not converged.")
 
     return nu
 

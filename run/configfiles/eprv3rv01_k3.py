@@ -78,9 +78,9 @@ eprvdict = {'offset': [0.0, 0, ['Uniform', -10, 10]],
 
 objectdict = {'eprv': eprvdict,
               'drift1': driftdict,
-              #'planet1': fp1dict,
-              #'planet2': fp2dict,
-              #'planet3': fp3dict,
+              'planet1': fp1dict,
+              'planet2': fp2dict,
+              'planet3': fp3dict,
           }
 
 configdicts = [rundict, objectdict, datadict]

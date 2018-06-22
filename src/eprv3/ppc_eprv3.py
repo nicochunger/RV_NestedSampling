@@ -22,7 +22,7 @@ from PyPolyChord.settings import PolyChordSettings
 start = time.time()
 
 # Generate dictionaries
-nplanets = 2 # Number of Planets in the model
+nplanets = 3 # Number of Planets in the model
 modelpath = f'configfiles/eprv3rv01_k{nplanets}.py'
 rundict, initial_values, datadict, priordict, fixedpardict = config.read_config(path + modelpath)
 covdict = preprocess(datadict)[0] # Covariance dictionary
@@ -52,10 +52,10 @@ def prior(hypercube):
 # Define PolyChord settings
 settings = PolyChordSettings(nDims, nDerived, )
 settings.do_clustering = False
-settings.nlive = 20*nDims
+settings.nlive = 12*nDims
 settings.file_root = modelpath[12:-3]
 settings.read_resume = False
-settings.num_repeats = nDims * 3
+settings.num_repeats = nDims * 2
 settings.feedback = 1
 settings.precision_criterion = 0.01
 
@@ -92,7 +92,12 @@ for i in range(nDims):
         header += ' ' # Add comma after each parameter, except the last one
 
 dataset = datadict['eprv']['datafile'][-8:-4]
-filename = f'results{dataset}_{nplanets}.txt'
+# Name of data file
+if 'narrowprior' not in modelpath:
+    filename = f'results{dataset}_{nplanets}.txt'
+else:
+    filename = f'results{dataset}_{nplanets}b.txt'
+
 try:
     # Append results to file
     f = np.loadtxt(filename)
@@ -104,6 +109,7 @@ except:
     # File does not exist, must create it first
     np.savetxt(filename, result, header=header, fmt='%.8e')
 
+# # Plotting
 # if nDims < 8:
 #     try:
 #         import getdist.plots
