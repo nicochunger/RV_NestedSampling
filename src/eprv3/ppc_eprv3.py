@@ -13,17 +13,32 @@ import config
 import numpy as np
 import time
 import datetime
+import argparse
 
 # PolyChord imports
 import PyPolyChord as PPC 
 from PyPolyChord.settings import PolyChordSettings
 
+# Read arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('-n', type=int, default=1)
+parser.add_argument('-clust', type=bool, default=False)
+parser.add_argument('-nlive', type=int, default=25)
+parser.add_argument('-nrep', type=int, default=3)
+parser.add_argument('-prec', type=float, default=0.01)
+# TODO Check how to include the option to run it with broad or narrow prior
+parser.add_argument('-narrow', type=bool, default=False)
+args_params = parser.parse_args()
+
 # Initialize start time to measure run time
 start = time.time()
 
 # Generate dictionaries
-nplanets = 3 # Number of Planets in the model
+nplanets = args_params.n # Number of Planets in the model
 modelpath = f'configfiles/eprv3rv01_k{nplanets}.py'
+if args_params.narrow:
+    splitpath = modelpath.split('.')
+    modelpath = splitpath[0] + '_narrowprior.' + splitpath[1]
 rundict, initial_values, datadict, priordict, fixedpardict = config.read_config(path + modelpath)
 covdict = preprocess(datadict)[0] # Covariance dictionary
 parnames = list(initial_values.keys()) # Parameter names
@@ -51,13 +66,13 @@ def prior(hypercube):
 
 # Define PolyChord settings
 settings = PolyChordSettings(nDims, nDerived, )
-settings.do_clustering = False
-settings.nlive = 12*nDims
+settings.do_clustering = args_params.clust
+settings.nlive = nDims * args_params.nlive
 settings.file_root = modelpath[12:-3]
 settings.read_resume = False
-settings.num_repeats = nDims * 2
-settings.feedback = 1
-settings.precision_criterion = 0.01
+settings.num_repeats = nDims * args_params.nrep
+#settings.feedback = 1
+settings.precision_criterion = args_params.prec
 
 # Run PolyChord
 output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
@@ -89,14 +104,14 @@ header = 'run_time logZ logZerr log10Z nlive prec '
 for i in range(nDims):
     header += parnames[i]
     if i < nDims-1:
-        header += ' ' # Add comma after each parameter, except the last one
+        header += ' ' # Add space after each parameter, except the last one
 
 dataset = datadict['eprv']['datafile'][-8:-4]
 # Name of data file
 if 'narrowprior' not in modelpath:
-    filename = f'results{dataset}_{nplanets}.txt'
+    filename = f'results/results{dataset}_{nplanets}a.txt'
 else:
-    filename = f'results{dataset}_{nplanets}b.txt'
+    filename = f'results/results{dataset}_{nplanets}b.txt'
 
 try:
     # Append results to file

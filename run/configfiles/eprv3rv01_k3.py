@@ -1,12 +1,11 @@
 target = 'eprv3rv01'
 t2 = target.replace('dot', '.')
-runid = 'k0'
+runid = 'k3'
 n = 3
 commentstr = ''
 submit = True
 
 import os
-import pickle
 import numpy as np
 
 datapath = os.path.join(os.getenv('HOME'), 'tesis/codigo/data')
@@ -18,7 +17,7 @@ rundict = {
     'target': target,
     'runid': runid,
     'nplanets': n,
-    'comment': '',
+    'comment': 'sesinsecos',
     'sampler': 'emcee',
     'nwalkers': 300,
     'a': 2.0
@@ -40,35 +39,41 @@ datadict = {
 #---------------------
 #        PLANET
 #--------------------
-fp1dict = {'k1' : [3.5, 1, ['Uniform', 0., 10.]], 
-           'period' : [4.6514, 2, ['Uniform', 4.0, 5.2], 3e-3],
-           'sesin' : [0.1, 1, ['Uniform', -1., 1.]],
+fp1dict = {'k1' : [1.96, 2, ['ModJeffreys', 1., 999.], 0.9], 
+           'period' : [12.111, 2, ['Jeffreys', 1.0, 1e4], 0.015],
            'secos' : [0.1, 1, ['Uniform', -1., 1.]],
-           'ml0' : [0.0, 1, ['Uniform', -6*np.pi, 6*np.pi]],
-           'epoch' : [56845.73, 0]
+           'sesin' : [0.1, 1, ['Uniform', -1., 1.]],
+           # 'ecc': [0.1, 1, ['Uniform', 0., 1.]],
+           # 'omega' : [0.1, 1, ['Uniform', 0., 2*np.pi]],
+           'ma0' : [0.1, 1, ['Uniform', 0., 2*np.pi]],
+           'epoch' : [278.019, 0]
 }
 
-fp2dict = {'k1' : [3.5, 1, ['Uniform', 0., 10.]], 
-           'period' : [3.06, 2, ['Uniform', 2.5, 3.5], 3e-3],
-           'sesin' : [0.1, 1, ['Uniform', -1., 1.]],
+fp2dict = {'k1' : [2.51, 2, ['ModJeffreys', 1., 999.], 0.5], 
+           'period' : [42.1173, 2, ['Jeffreys', 1.0, 1e4], 0.13],
            'secos' : [0.1, 1, ['Uniform', -1., 1.]],
-           'ml0' : [0.0, 1, ['Uniform', -6*np.pi, 6*np.pi]],
-           'epoch' : [56845.73, 0]
+           'sesin' : [0.1, 1, ['Uniform', -1., 1.]],
+           # 'ecc': [0.1, 1, ['Uniform', 0., 1.]],
+           # 'omega' : [0.1, 1, ['Uniform', 0., 2*np.pi]],
+           'ma0' : [0.1, 1, ['Uniform', 0., 2*np.pi]],
+           'epoch' : [278.019, 0]
 }
 
-fp3dict = {'k1' : [3.5, 1, ['Uniform', 0., 10.]], 
-           'period' : [1.9686, 2, ['Uniform', 1.5, 2.5], 1e-2],
-           'sesin' : [0.1, 1, ['Uniform', -1., 1.]],
+fp3dict = {'k1' : [1.0, 1, ['ModJeffreys', 1., 999.], 0.5], 
+           'logperiod' : [100, 1, ['Uniform', 0.0, np.log(1e4)], 0.13],
            'secos' : [0.1, 1, ['Uniform', -1., 1.]],
-           'ml0' : [0.0, 1, ['Uniform', -6*np.pi, 6*np.pi]],
-           'epoch' : [56845.73, 0]
+           'sesin' : [0.1, 1, ['Uniform', -1., 1.]],
+           # 'ecc': [0.1, 1, ['Uniform', 0., 1.]],
+           # 'omega' : [0.1, 1, ['Uniform', 0., 2*np.pi]],
+           'ma0' : [0.1, 1, ['Uniform', 0., 2*np.pi]],
+           'epoch' : [278.019, 0]
 }
 
 driftdict = {'v0': [0.0, 1, ['Uniform', -1000., 1000.]], 
              'lin': [0.0, 0, ['Uniform', -10., 10.]],
              'qua': [0.0, 0],
              'cub': [0.0, 0],
-             'tref': [56845.73, 0],
+             'tref': [278.019, 0],
              'unitconstant': [1.0, 0],
              }
 

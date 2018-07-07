@@ -1,7 +1,6 @@
-for i in {1..2}
+for i in {1..10}
 do
-    #python ppc_eprv3.py
-    python -m cProfile -o profile.txt ppc_eprv3.py
+    python -m cProfile -o profile.txt ppc_eprv3.py -n 2 -nlive 25 -nrep 3 -prec 0.01
 done
 
 python profiler.py
