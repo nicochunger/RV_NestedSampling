@@ -3,29 +3,41 @@ from scipy.linalg import cho_factor
 import warnings
 import ctypes as C
 
+# Ctypes declarations
 CLIB = C.CDLL('/home/nunger/tesis/codigo/run/trueanomaly.so')
+flp = C.POINTER(C.c_float)
 CLIB.trueanomaly.argtypes = [C.c_float, C.c_float, C.c_int, C.c_int]
+CLIB.trueanomaly_array.argtypes = [flp, C.c_int, C.c_float, flp, C.c_int, C.c_int]
 CLIB.trueanomaly.restype = C.c_float
 
 from math import pi
 
 import likelihood
 
+def cTrueAnomaly(M, ecc, niter, tol):
+    return CLIB.trueanomaly(M, ecc, niter, tol)
+
 def trueanomaly(M, ecc, niterationmax=1e4):
 
-    ecc = np.where(ecc > 0.99, 0.99, ecc)
-    nu = np.zeros(len(M))
+    #ecc = np.where(ecc > 0.99, 0.99, ecc) # Que esto se haga en C
+    nu = np.zeros(len(M), dtype=C.c_float)
     tol = 1e-4
 
-    # print(f'M = {M} \t type of M[0] = {type(M[0])}')
-    # print(f'ecc = {ecc} \t type of ecc = {type(ecc)}')
-    # print(f'itermax = {niterationmax} \t type of itermax = {type(niterationmax)}')
+    M = M.astype(C.c_float)
 
-    for i in range(len(M)):
-        # Call C function to calculate true anomaly
-        nu[i] = CLIB.trueanomaly(float(M[i]), float(ecc), int(niterationmax), int(tol))
-        if nu[i]==-1:
-            raise RuntimeError("Eccentric anomaly comoputation not converged.")
+    p_M = M.ctypes.data_as(flp) # Pointer to M
+    p_nu = nu.ctypes.data_as(flp) # Pointer to nu (result array)
+
+    # Compute trueanomaly in C and store result in nu
+    CLIB.trueanomaly_array(p_M, int(len(M)), float(ecc), p_nu, int(niterationmax), int(tol))
+
+    # for i in range(len(M)):
+    #     # Call C function to calculate true anomaly
+    #     nu[i] = cTrueAnomaly(float(M[i]), float(ecc), int(niterationmax), int(tol))
+    
+    # Check if there was an error in trueanomaly computation
+    if -1 in nu:
+        raise RuntimeError("Eccentric anomaly comoputation not converged.")
 
     return nu
 
