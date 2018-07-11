@@ -3,6 +3,8 @@ from scipy.linalg import cho_factor
 import warnings
 import ctypes as C
 import os
+import likelihood
+from math import pi
 
 # Ctypes declarations
 dirname = os.path.dirname(__file__)
@@ -13,16 +15,8 @@ CLIB.trueanomaly.argtypes = [C.c_float, C.c_float, C.c_int, C.c_int]
 CLIB.trueanomaly_array.argtypes = [flp, C.c_int, C.c_float, flp, C.c_int, C.c_int]
 CLIB.trueanomaly.restype = C.c_float
 
-from math import pi
-
-import likelihood
-
-def cTrueAnomaly(M, ecc, niter, tol):
-    return CLIB.trueanomaly(M, ecc, niter, tol)
-
 def trueanomaly(M, ecc, niterationmax=1e4):
 
-    #ecc = np.where(ecc > 0.99, 0.99, ecc) # Que esto se haga en C
     nu = np.zeros(len(M), dtype=C.c_float)
     tol = 1e-4
 
@@ -33,11 +27,7 @@ def trueanomaly(M, ecc, niterationmax=1e4):
 
     # Compute trueanomaly in C and store result in nu
     CLIB.trueanomaly_array(p_M, int(len(M)), float(ecc), p_nu, int(niterationmax), int(tol))
-
-    # for i in range(len(M)):
-    #     # Call C function to calculate true anomaly
-    #     nu[i] = cTrueAnomaly(float(M[i]), float(ecc), int(niterationmax), int(tol))
-    
+  
     # Check if there was an error in trueanomaly computation
     if -1 in nu:
         raise RuntimeError("Eccentric anomaly comoputation not converged.")

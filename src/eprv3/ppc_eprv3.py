@@ -22,12 +22,11 @@ from PyPolyChord.settings import PolyChordSettings
 # Read arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('-n', type=int, default=1)
-parser.add_argument('-clust', type=bool, default=False)
 parser.add_argument('-nlive', type=int, default=25)
 parser.add_argument('-nrep', type=int, default=3)
 parser.add_argument('-prec', type=float, default=0.01)
-# TODO Check how to include the option to run it with broad or narrow prior
-parser.add_argument('-narrow', type=bool, default=False)
+parser.add_argument('--clust', action='store_true')
+parser.add_argument('--narrow', action='store_true')
 args_params = parser.parse_args()
 
 # Initialize start time to measure run time
