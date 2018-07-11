@@ -1,91 +1,47 @@
 import numpy as np
 from scipy.linalg import cho_factor
 import warnings
+import ctypes as C
+import os
+
+# Ctypes declarations
+dirname = os.path.dirname(__file__)
+filename = os.path.join(dirname, '../bin/trueanomaly.so')
+CLIB = C.CDLL(filename)
+flp = C.POINTER(C.c_float)
+CLIB.trueanomaly.argtypes = [C.c_float, C.c_float, C.c_int, C.c_int]
+CLIB.trueanomaly_array.argtypes = [flp, C.c_int, C.c_float, flp, C.c_int, C.c_int]
+CLIB.trueanomaly.restype = C.c_float
 
 from math import pi
 
 import likelihood
 
-def trueanomaly(M, ecc, method='Newton', niterationmax=1e4):
+def cTrueAnomaly(M, ecc, niter, tol):
+    return CLIB.trueanomaly(M, ecc, niter, tol)
 
-    # FIXME this code is too slow. Fix by converging each element individually
+def trueanomaly(M, ecc, niterationmax=1e4):
 
-    if not isinstance(M, float):
-        E = M
-    else:
-        E = np.array([M,])
+    #ecc = np.where(ecc > 0.99, 0.99, ecc) # Que esto se haga en C
+    nu = np.zeros(len(M), dtype=C.c_float)
+    tol = 1e-4
 
-    Eo = M
-    ecc = np.where(ecc > 0.99, 0.99, ecc)
+    M = M.astype(C.c_float)
 
-    # print(f'M shape = {np.shape(M)}')
-    # print(f'ecc = {ecc}')
+    p_M = M.ctypes.data_as(flp) # Pointer to M
+    p_nu = nu.ctypes.data_as(flp) # Pointer to nu (result array)
 
-    #niteration = 0
+    # Compute trueanomaly in C and store result in nu
+    CLIB.trueanomaly_array(p_M, int(len(M)), float(ecc), p_nu, int(niterationmax), int(tol))
 
-    #--------------------------------------------------------------------
-    # while np.any(np.abs(E-Eo)>1e-5) or niteration==0:
-    #     # FIXME quick idea is to check if it converged only every 100 steps
-    #     # This reduces drastically the amount of times np.any has to be called.
-    #     #for _ in range(100):
-    #     Eo = E
+    # for i in range(len(M)):
+    #     # Call C function to calculate true anomaly
+    #     nu[i] = cTrueAnomaly(float(M[i]), float(ecc), int(niterationmax), int(tol))
+    
+    # Check if there was an error in trueanomaly computation
+    if -1 in nu:
+        raise RuntimeError("Eccentric anomaly comoputation not converged.")
 
-    #     ff = E - ecc*np.sin(E) - M
-    #     dff = 1 - ecc*np.cos(E)
-
-    #     if method == 'Newton':
-    #         # Use Newton method
-    #         E = Eo - ff / dff
-
-    #     elif method == 'Halley':
-    #         # Use Halley's parabolic method
-    #         d2ff = ecc*np.sin(E)
-        
-    #         discr = dff **2 - 2 * ff * d2ff
-
-    #         E = np.where((discr < 0), Eo - dff / d2ff,
-    #                     Eo - 2*ff / (dff + np.sign(dff) * np.sqrt(discr))
-    #                 )
-
-    #     # Increase iteration number; if above limit, break with exception.
-    #     niteration += 1
-    #     if niteration >= niterationmax:
-    #         raise RuntimeError('Eccentric anomaly comoputation not converged.')
-    # print(f'iterations = {niteration}')
-    #-------------------------------------------------------------------------
-    iters = []
-    for i in range(len(M)):
-        niteration = 0
-        while np.abs(E[i]-Eo[i])>1e-5 or niteration==0:
-            Eo[i] = E[i]
-
-            ff = E[i] - ecc*np.sin(E[i]) - M[i]
-            dff = 1 - ecc*np.cos(E[i])
-
-            if method == 'Newton':
-                # Use Newton method
-                E[i] = Eo[i] - ff / dff
-
-            elif method == 'Halley':
-                # Use Halley's parabolic method
-                d2ff = ecc*np.sin(E)
-            
-                discr = dff **2 - 2 * ff * d2ff
-
-                E = np.where((discr < 0), Eo - dff / d2ff,
-                            Eo - 2*ff / (dff + np.sign(dff) * np.sqrt(discr))
-                        )
-
-            # Increase iteration number; if above limit, break with exception.
-            niteration += 1
-            if niteration >= niterationmax:
-                raise RuntimeError('Eccentric anomaly comoputation not converged.')
-        iters.append(niteration)    
-    print(f'mean iterations = {np.mean(iters)}')
-    # Compute true anomaly
-    nu = 2. * np.arctan2(np.sqrt(1. + ecc) * np.sin(E / 2.),
-                        np.sqrt(1. - ecc) * np.cos(E / 2.)
-                        )
     return nu
 
 def preprocess(datadict,):

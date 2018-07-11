@@ -8,7 +8,7 @@ path = '/home/nunger/tesis/codigo/run/'
 sys.path.append(path)
 
 # Dependencies
-from model_eprv3_kepler_ctypes import lnlike, lnprior, preprocess
+from model_eprv3_kepler import lnlike, lnprior, preprocess
 import config
 import numpy as np
 import time
