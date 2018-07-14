@@ -25,9 +25,13 @@ parser.add_argument('-n', type=int, default=1)
 parser.add_argument('-nlive', type=int, default=25)
 parser.add_argument('-nrep', type=int, default=3)
 parser.add_argument('-prec', type=float, default=0.01)
+parser.add_argument('-dfile', type=int, default=1)
 parser.add_argument('--clust', action='store_true')
 parser.add_argument('--narrow', action='store_true')
 args_params = parser.parse_args()
+
+datafile = args_params.dfile # Data set to analyze
+assert datafile in range(1,7), "Incorrect datafile. Has to be between 1 and 6."
 
 # Initialize start time to measure run time
 start = time.time()
@@ -38,6 +42,21 @@ modelpath = f'configfiles/eprv3rv01_k{nplanets}.py'
 if args_params.narrow:
     splitpath = modelpath.split('.')
     modelpath = splitpath[0] + '_narrowprior.' + splitpath[1]
+
+#---- Edit configfile to set the correct datafile ------
+with open(path+modelpath) as f:
+    lines = f.readlines()
+
+for i in range(len(lines)):
+    if 'datafile' in lines[i]:
+        # Edit that line to insert datafile
+        lines[i] = lines[i][:49] + str(datafile) + lines[i][50:]
+
+with open(path+modelpath, "w") as f:
+    # Write edited file
+    f.write(''.join(lines))
+#--------------------------------------------------------
+
 rundict, initial_values, datadict, priordict, fixedpardict = config.read_config(path + modelpath)
 covdict = preprocess(datadict)[0] # Covariance dictionary
 parnames = list(initial_values.keys()) # Parameter names
