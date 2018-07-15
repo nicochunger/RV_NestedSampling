@@ -1,7 +1,8 @@
 ulimit -s unlimited
-for i in {1..3}
+for dfile in {1..6}
 do
-    python -m cProfile -o profile.txt ppc_eprv3.py -n 3 -nlive 25 -nrep 3 -prec 0.01
+    for i in {1..10}
+    do
+        python ppc_eprv3.py -n 1 -dfile $dfile --clust
+    done
 done
-
-python profiler.py

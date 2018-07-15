@@ -21,13 +21,13 @@ from PyPolyChord.settings import PolyChordSettings
 
 # Read arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('-n', type=int, default=1)
-parser.add_argument('-nlive', type=int, default=25)
-parser.add_argument('-nrep', type=int, default=3)
-parser.add_argument('-prec', type=float, default=0.01)
-parser.add_argument('-dfile', type=int, default=1)
-parser.add_argument('--clust', action='store_true')
-parser.add_argument('--narrow', action='store_true')
+parser.add_argument('-n', type=int, default=1, help='Number of planets in model.')
+parser.add_argument('-nlive', type=int, default=25, help='Number of live points in nested sampling. As: nlive*ndim')
+parser.add_argument('-nrep', type=int, default=3, help='Number of repeats in slice sampling. As: nrep*ndim')
+parser.add_argument('-prec', type=float, default=0.01, help='Precision criterion for termination.')
+parser.add_argument('-dfile', type=int, default=1, help='Which dataset to analyze.')
+parser.add_argument('--clust', action='store_true', help='If clustering will be activated.')
+parser.add_argument('--narrow', action='store_true', help='If the narrowpriors will be used.')
 args_params = parser.parse_args()
 
 datafile = args_params.dfile # Data set to analyze
@@ -39,7 +39,7 @@ start = time.time()
 # Generate dictionaries
 nplanets = args_params.n # Number of Planets in the model
 modelpath = f'configfiles/eprv3rv01_k{nplanets}.py'
-if args_params.narrow:
+if args_params.narrow and nplanets!=0:
     splitpath = modelpath.split('.')
     modelpath = splitpath[0] + '_narrowprior.' + splitpath[1]
 
@@ -124,12 +124,12 @@ for i in range(nDims):
     if i < nDims-1:
         header += ' ' # Add space after each parameter, except the last one
 
-dataset = datadict['eprv']['datafile'][-8:-4]
+#dataset = datadict['eprv']['datafile'][-8:-4]
 # Name of data file
 if 'narrowprior' not in modelpath:
-    filename = f'results/results{dataset}_{nplanets}a.txt'
+    filename = f'results/000{datafile}/results000{datafile}_{nplanets}a.txt'
 else:
-    filename = f'results/results{dataset}_{nplanets}b.txt'
+    filename = f'results/000{datafile}/results000{datafile}_{nplanets}b.txt'
 
 try:
     # Append results to file

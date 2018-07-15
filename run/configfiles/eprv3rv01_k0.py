@@ -29,7 +29,7 @@ rundict = {
 #-------------------
 datadict = {
     'eprv':
-    {'datafile':  os.path.join(datapath, 'rvs_0001.txt'),
+    {'datafile':  os.path.join(datapath, 'rvs_0006.txt'),
      'instrument': 'HARPS',
      'mask': 'G2',
      'type': 'RV',
