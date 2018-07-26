@@ -14,6 +14,7 @@ import numpy as np
 import time
 import datetime
 import argparse
+import pickle
 
 # PolyChord imports
 import PyPolyChord as PPC 
@@ -141,6 +142,14 @@ try:
 except:
     # File does not exist, must create it first
     np.savetxt(filename, result, header=header, fmt='%.8e')
+
+# Save output data as a pickle file
+timecode = time.strftime("%m%d_%H%M")
+if 'narrowprior' not in modelpath:
+    pickle_file = f'results/000{datafile}/outputs/output_000{datafile}_{nplanets}a_'+timecode+'.p'
+else:
+    pickle_file = f'results/000{datafile}/outputs/output_000{datafile}_{nplanets}b_'+timecode+'.p'
+pickle.dump(output, open(pickle_file, "wb"))
 
 # # Plotting
 # if nDims < 8:
