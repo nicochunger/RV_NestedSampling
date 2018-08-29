@@ -131,8 +131,8 @@ def model(pardict, time):
     # Find out number of planets
     planets = []
     for i in range(1, 10):
-        if ('planet{}_period'.format(i) in pardict) or \
-           ('planet{}_logperiod'.format(i) in pardict):
+        if (f'planet{i}_period' in pardict) or \
+           (f'planet{i}_logperiod' in pardict):
             planets.append(i)
 
     rv_planet = np.zeros((len(planets) + 1, len(time)))
@@ -176,7 +176,7 @@ def lnlike(param, parnames, fixedpardict, data, covdict, **kwargs):
             return -np.inf
 
         # Compute likelihood
-        res = y - pardict['{}_offset'.format(instrument)] - rvm
+        res = y - pardict[f'{instrument}_offset'] - rvm
         lnlike[i] = likelihood.lnlike_gaussian(res, cov)
 
     return np.sum(lnlike)
