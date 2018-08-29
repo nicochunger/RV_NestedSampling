@@ -15,6 +15,7 @@ import time
 import datetime
 import argparse
 import pickle
+import os
 
 # PolyChord imports
 import PyPolyChord as PPC 
@@ -58,9 +59,8 @@ with open(path+modelpath, "w") as f:
     f.write(''.join(lines))
 #--------------------------------------------------------
 
-rundict, initial_values, datadict, priordict, fixedpardict = config.read_config(path + modelpath)
+parnames, datadict, priordict, fixedpardict = config.read_config(path + modelpath)
 covdict = preprocess(datadict)[0] # Covariance dictionary
-parnames = list(initial_values.keys()) # Parameter names
 
 nDims = 2 + (nplanets * 5) # Number of parameters to fit
 assert nDims == len(parnames), "Number of parameters and dimensions don't match"
@@ -82,11 +82,19 @@ def prior(hypercube):
 
     return theta
 
+dirname = os.path.dirname(os.path.abspath(__file__))
+timecode = time.strftime("%m%d_%H%M")
+if 'narrowprior' not in modelpath:
+    folder_path = f'000{datafile}_{nplanets}a_' + timecode
+else:
+    folder_path = f'000{datafile}_{nplanets}b_' + timecode
 
 # Define PolyChord settings
 settings = PolyChordSettings(nDims, nDerived, )
 settings.do_clustering = args_params.clust
 settings.nlive = nDims * args_params.nlive
+settings.base_dir = dirname+'/chains/'+folder_path
+print(settings.base_dir)
 settings.file_root = modelpath[12:-3]
 settings.read_resume = False
 settings.num_repeats = nDims * args_params.nrep
@@ -144,11 +152,7 @@ except:
     np.savetxt(filename, result, header=header, fmt='%.8e')
 
 # Save output data as a pickle file
-timecode = time.strftime("%m%d_%H%M")
-if 'narrowprior' not in modelpath:
-    pickle_file = f'results/000{datafile}/outputs/output_000{datafile}_{nplanets}a_'+timecode+'.p'
-else:
-    pickle_file = f'results/000{datafile}/outputs/output_000{datafile}_{nplanets}b_'+timecode+'.p'
+pickle_file = settings.base_dir + '/output.p'
 pickle.dump(output, open(pickle_file, "wb"))
 
 # # Plotting

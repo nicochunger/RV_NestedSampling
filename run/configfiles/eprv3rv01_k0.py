@@ -33,7 +33,8 @@ datadict = {
      'instrument': 'HARPS',
      'mask': 'G2',
      'type': 'RV',
-     'jittermodel': 'constant'
+     'jittermodel': 'constant',
+     'sep' : ' '
  },
     }
 

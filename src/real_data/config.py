@@ -101,13 +101,10 @@ def read_data(datadict):
         try:
             sep = datadict[inst]['sep']
         except KeyError:
-            # sep = '\t'
-            sep = ' '
+            sep = '\t'
         
         # Read rdb file
-        # data = pd.read_csv(datadict[inst]['datafile'], sep=sep,
-        #                    comment='#', skiprows=[1,])
         data = pd.read_csv(datadict[inst]['datafile'], sep=sep,
-                          comment='#', header=None, names=['jbl', 'vrad', 'svrad'], usecols=[0,1,2])
+                            comment='#', skiprows=[1,])
         datadict[inst]['data'] = data
     
