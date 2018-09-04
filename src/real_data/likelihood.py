@@ -6,6 +6,8 @@ import numpy as np
 from scipy.linalg import cho_factor, cho_solve
 
 from math import pi, log
+import os
+
 
 def lnlike_gaussian(residuals, K):
     """
@@ -67,10 +69,10 @@ def lnlike_gaussian_marginalisedjitter(residuals, xnodes, wnodes, chofactors,
         lnlike[i] = -0.5 * np.dot(residuals.T, alpha)
 
     lnmarglike = log_sum(np.log(wnodes) + lndeterminants +
-                             lnlike + np.log(priorpdf))
+                         lnlike + np.log(priorpdf))
     return log(0.5*(b-a)) + lnmarglike
-        
-        
+
+
 def log_sum(log_summands):
     a = np.inf
     x = log_summands.copy()
@@ -78,4 +80,3 @@ def log_sum(log_summands):
         a = x[0] + np.log(1 + np.sum(np.exp(x[1:] - x[0])))
         np.random.shuffle(x)
     return a
-

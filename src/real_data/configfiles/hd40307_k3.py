@@ -12,7 +12,7 @@ datapath = os.path.join(os.getenv('HOME'), 'tesis/codigo/data/')
 # -------------------
 datadict = {
     'rvrd':
-    {'datafile':  os.path.join(datapath, target+'/HD40307_HARPS03(DRS-3-5).rdb'),
+    {'datafile':  os.path.join(datapath, target+'/HD40307_HARPS03(DRS-3-5)_night_binning.rdb'),
      'instrument': 'HARPS03',
      'mask': 'G2',
      'type': 'RV',
@@ -51,12 +51,13 @@ fp3dict = {'k1': [2.51, 2, ['ModJeffreys', 1., 999.], 0.5],
            'epoch': [278.019, 0]
            }
 
-driftdict = {'v0': [0.0, 1, ['Uniform', -1000., 1000.]],
-             'lin': [0.0, 0, ['Uniform', -10., 10.]],
-             'qua': [0.0, 0],
-             'cub': [0.0, 0],
+# TODO fijarme que el fit sea sobre el tiempo ajustado (?
+driftdict = {'v0': [4.14420729e+03, 0, ['Uniform', -1000., 1000.]],
+             'lin': [-2.27489889e-01, 0, ['Uniform', -10., 10.]],
+             'qua': [4.15577868e-06, 0],
+             'cub': [-2.52946502e-11, 0],
              'tref': [278.019, 0],
-             'unitconstant': [1.0, 0],
+             'unitconstant': [1.0, 1, ['Uniform', -1000., 1000.]],
              }
 
 rvrddict = {'offset': [31334.45, 0, ['Uniform', -32000, 32000]],

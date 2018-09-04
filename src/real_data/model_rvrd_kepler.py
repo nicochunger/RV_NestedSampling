@@ -127,6 +127,7 @@ def model(pardict, time):
     lin = pardict['drift1_lin']
     qua = pardict['drift1_qua']
     cub = pardict['drift1_cub']
+    #unitconstant = pardict['drift1_unitconstant']
 
     # Find out number of planets
     planets = []
@@ -139,11 +140,11 @@ def model(pardict, time):
     for i, planet in enumerate(planets):
         rv_planet[i] = modelk(pardict, time, planet=planet)
 
-    # Add secular acceleration
+    # # Add secular acceleration
     tt = (time - pardict['drift1_tref'])/365.25
-    rv_planet[-1] = lin*tt + qua*tt**2 + cub*tt*3
+    rv_planet[-1] = v0 + lin*tt + qua*tt**2 + cub*tt*3
 
-    return v0 + rv_planet.sum(axis=0)
+    return rv_planet.sum(axis=0)
 
 
 def lnlike(param, parnames, fixedpardict, data, covdict, **kwargs):
@@ -166,7 +167,7 @@ def lnlike(param, parnames, fixedpardict, data, covdict, **kwargs):
         cov = covdict[instrument].copy()
 
         # Add diagonal with noise.
-        jitter = pardict['{}_jitter'.format(instrument)]
+        jitter = pardict[f'{instrument}_jitter']
         cov += np.diag(ey**2 + jitter**2)
 
         # Construct model

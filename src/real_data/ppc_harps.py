@@ -10,12 +10,16 @@ import time
 import datetime
 import argparse
 import pickle
-import os
 import subprocess
 
 # PolyChord imports
 import PyPolyChord as PPC
 from PyPolyChord.settings import PolyChordSettings
+
+# Remove stack size limit
+import resource
+resource.setrlimit(resource.RLIMIT_STACK,
+                   (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
 
 # Read arguments
 parser = argparse.ArgumentParser()
@@ -23,7 +27,7 @@ parser.add_argument('-n', type=int, default=1,
                     help='Number of planets in model.')
 parser.add_argument('-nlive', type=int, default=25,
                     help='Number of live points in nested sampling. As: nlive*ndim')
-parser.add_argument('-nrep', type=int, default=5,
+parser.add_argument('-nrep', type=int, default=3,
                     help='Number of repeats in slice sampling. As: nrep*ndim')
 parser.add_argument('-prec', type=float, default=0.01,
                     help='Precision criterion for termination.')
@@ -32,7 +36,7 @@ parser.add_argument('-prec', type=float, default=0.01,
 # parser.add_argument('-inst', type=str, default=1,
 #                     help='Which dataset to analyze.')
 
-parser.add_argument('--clust', action='store_true',
+parser.add_argument('--noclust', action='store_false',
                     help='If clustering will be activated.')
 
 parser.add_argument('--resume', action='store_true',
@@ -51,23 +55,25 @@ nplanets = args_params.n  # Number of Planets in the model
 
 # Change number of plantes if resume is true
 dirname = '/media/nunger/Windows/Nico/Facu/Tesis/polychord_chains/'
-prev_run = subprocess.check_output(
-    'ls -d '+dirname+'*/', shell=True).decode('utf-8').replace(dirname, '').split('/\n')[-2]
+# FIXME This takes the last run with the most planets which may not be the one
+# I should only look for the dates/times of the runs
 if args_params.resume:
+    prev_run = subprocess.check_output(
+        'ls -d '+dirname+'*/', shell=True).decode('utf-8').replace(dirname, '').split('/\n')[-2]
     # Extract the number of planets analyzed in previous run
     nplanets = int(prev_run.split('_')[1][0])
 
 # Assign modelpath
 modelpath = f'configfiles/hd40307_k{nplanets}.py'
 
-
 # Generate dictionaries
 parnames, datadict, priordict, fixedpardict = config.read_config(modelpath)
 covdict = preprocess(datadict)[0]  # Covariance dictionary
 
-nDims = 2 + (nplanets * 5)  # Number of parameters to fit
-assert nDims == len(
-    parnames), "Number of parameters and dimensions don't match"
+# nDims = 2 + (nplanets * 5)  # Number of parameters to fit
+nDims = len(parnames)
+# assert nDims == len(
+#     parnames), "Number of parameters and dimensions don't match"
 nDerived = 0
 
 
@@ -98,7 +104,7 @@ if not args_params.save:
 
 # Define PolyChord settings
 settings = PolyChordSettings(nDims, nDerived, )
-settings.do_clustering = args_params.clust
+settings.do_clustering = args_params.noclust
 settings.nlive = nDims * args_params.nlive
 settings.base_dir = dirname+folder_path
 settings.file_root = modelpath[12:-3]
@@ -115,11 +121,12 @@ if args_params.resume:
 output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
 
 # Parameter names
-latexnames = [r'\sigma_J', r'C']
-for j in range(nplanets):
-    latexnames.extend(
-        [fr'K_{j}', fr'P_{j}', fr'e_{j}', fr'\omega_{j}', fr'M_{j}'])
-paramnames = [(x, latexnames[i]) for i, x in enumerate(parnames)]
+# latexnames = [r'\sigma_J', r'C']
+# for j in range(nplanets):
+#     latexnames.extend(
+#         [fr'K_{j}', fr'P_{j}', fr'e_{j}', fr'\omega_{j}', fr'M_{j}'])
+# paramnames = [(x, latexnames[i]) for i, x in enumerate(parnames)]
+paramnames = [(x, x) for x in parnames]
 
 output.make_paramnames_files(paramnames)
 
@@ -129,7 +136,7 @@ print(f'\nTotal run time was: {datetime.timedelta(seconds=int(Dt))}')
 print(f'\nlog10(Z) = {output.logZ*0.43429} \n')  # Log10 of the evidence
 
 # Save output data as a pickle file
-if not args_params.save:
+if args_params.save:
     pickle_file = settings.base_dir + '/output.p'
     pickle.dump(output, open(pickle_file, "wb"))
 
