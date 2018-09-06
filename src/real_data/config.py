@@ -4,7 +4,36 @@ import pandas as pd
 
 import priors
 
-def read_config(configfile):
+
+# def read_config(configfile):
+#     """
+#     Initialises a sampler object using parameters in config.
+
+#     :param string config: string indicating path to configuration file.
+#     """
+
+#     # Import configuration file as module
+#     c = imp.load_source('c', configfile)
+
+#     # Make copy of all relavant dictionaries
+#     input_dict, datadict = map(dict.copy, c.configdicts)
+
+#     # Create prior instances
+#     priordict = priors.prior_constructor(input_dict, {})
+
+#     # Build list of parameter names
+#     parnames, _ = get_parnames(input_dict)
+
+#     # Read data from file(s)
+#     read_data(c.datadict)
+
+#     # Fixed parameters
+#     fixedpardict = get_fixedparvalues(input_dict)
+
+#     return parnames, datadict, priordict, fixedpardict
+
+
+def read_config(configfile, nplanets):
     """
     Initialises a sampler object using parameters in config.
 
@@ -15,14 +44,19 @@ def read_config(configfile):
     c = imp.load_source('c', configfile)
 
     # Make copy of all relavant dictionaries
-    input_dict, datadict = map(dict.copy, c.configdicts)
+    datadict, fpdict, driftdict, harpsdict = map(dict.copy, c.configdicts)
+
+    # Create input_dict in acordance to number of planets in the model
+    input_dict = {'harps': harpsdict, 'drift1': driftdict}
+    for i in range(1, nplanets+1):
+        input_dict.update({f'planet{i}': fpdict.copy()})
 
     # Create prior instances
     priordict = priors.prior_constructor(input_dict, {})
-    
+
     # Build list of parameter names
     parnames, _ = get_parnames(input_dict)
-    
+
     # Read data from file(s)
     read_data(c.datadict)
 
@@ -30,6 +64,7 @@ def read_config(configfile):
     fixedpardict = get_fixedparvalues(input_dict)
 
     return parnames, datadict, priordict, fixedpardict
+
 
 def get_parnames(input_dict):
     parnames = []
@@ -42,6 +77,7 @@ def get_parnames(input_dict):
                 fixparnames.append(obj+'_'+par)
     return parnames, fixparnames
 
+
 def get_fixedparvalues(input_dict):
     fpdict = {}
     for obj in input_dict:
@@ -49,6 +85,7 @@ def get_fixedparvalues(input_dict):
             if input_dict[obj][par][1] == 0:
                 fpdict[obj+'_'+par] = input_dict[obj][par][0]
     return fpdict
+
 
 def draw_initial_values(input_dict, priordict, nwalkers=1):
     """
@@ -68,7 +105,7 @@ def draw_initial_values(input_dict, priordict, nwalkers=1):
             # For emcee cannot start all walkers exactly at the same place
             # or that parameter will never evolve. Add "noise".
             parlist = input_dict[obj][par]
-            
+
             try:
                 scale = parlist[3]
             except IndexError:
@@ -80,8 +117,8 @@ def draw_initial_values(input_dict, priordict, nwalkers=1):
                     scale = parlist[2][1] * 0.05
                 else:
                     print(parlist)
-            p0  = (np.full(nwalkers, parlist[0]) +
-                   np.random.randn(nwalkers) * scale)
+            p0 = (np.full(nwalkers, parlist[0]) +
+                  np.random.randn(nwalkers) * scale)
             del(scale)
 
         elif input_dict[obj][par][1] == 3:
@@ -94,7 +131,8 @@ def draw_initial_values(input_dict, priordict, nwalkers=1):
             # raise ValueError('Ilegal flag for parameter.')
         initial_values[fullpar] = p0
     return initial_values
-    
+
+
 def read_data(datadict):
     for inst in datadict:
         # Try to get custom separator
@@ -102,9 +140,8 @@ def read_data(datadict):
             sep = datadict[inst]['sep']
         except KeyError:
             sep = '\t'
-        
+
         # Read rdb file
         data = pd.read_csv(datadict[inst]['datafile'], sep=sep,
-                            comment='#', skiprows=[1,])
+                           comment='#', skiprows=[1, ])
         datadict[inst]['data'] = data
-    

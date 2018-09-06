@@ -37,7 +37,7 @@ parser.add_argument('-prec', type=float, default=0.01,
 #                     help='Which dataset to analyze.')
 
 parser.add_argument('--noclust', action='store_false',
-                    help='If clustering will be activated.')
+                    help='If clustering should be turned off.')
 
 parser.add_argument('--resume', action='store_true',
                     help='If the previous run should be resumed.')
@@ -64,16 +64,16 @@ if args_params.resume:
     nplanets = int(prev_run.split('_')[1][0])
 
 # Assign modelpath
-modelpath = f'configfiles/hd40307_k{nplanets}.py'
+# modelpath = f'configfiles/hd40307_k{nplanets}.py'
+modelpath = f'configfiles/hd40307_model.py'
 
 # Generate dictionaries
-parnames, datadict, priordict, fixedpardict = config.read_config(modelpath)
+parnames, datadict, priordict, fixedpardict = config.read_config(
+    modelpath, nplanets)
 covdict = preprocess(datadict)[0]  # Covariance dictionary
 
-# nDims = 2 + (nplanets * 5)  # Number of parameters to fit
+# Number of dimensions is the number of parameters in the model
 nDims = len(parnames)
-# assert nDims == len(
-#     parnames), "Number of parameters and dimensions don't match"
 nDerived = 0
 
 
@@ -107,7 +107,7 @@ settings = PolyChordSettings(nDims, nDerived, )
 settings.do_clustering = args_params.noclust
 settings.nlive = nDims * args_params.nlive
 settings.base_dir = dirname+folder_path
-settings.file_root = modelpath[12:-3]
+settings.file_root = f'hd40307_k{nplanets}'  # modelpath[12:-3]
 settings.num_repeats = nDims * args_params.nrep
 settings.precision_criterion = args_params.prec
 settings.read_resume = False
@@ -136,9 +136,9 @@ print(f'\nTotal run time was: {datetime.timedelta(seconds=int(Dt))}')
 print(f'\nlog10(Z) = {output.logZ*0.43429} \n')  # Log10 of the evidence
 
 # Save output data as a pickle file
-if args_params.save:
-    pickle_file = settings.base_dir + '/output.p'
-    pickle.dump(output, open(pickle_file, "wb"))
+pickle_file = settings.base_dir + '/output.p'
+print(pickle_file)
+pickle.dump(output, open(pickle_file, "wb"))
 
 # Save evidence and other relevant data
 result = np.zeros(6)

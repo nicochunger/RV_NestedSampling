@@ -23,8 +23,8 @@ datadict = {
 # ---------------------
 #        PLANETS
 # --------------------
-fp1dict = {'k1': [2.76, 2, ['ModJeffreys', 1., 999.], 0.5],
-           'period': [42.0615, 2, ['Jeffreys', 1.0, 1e4], 0.13],
+fp1dict = {'k1': [2.76, 2, ['Uniform', 0., 200.]],
+           'period': [42.0615, 2, ['Jeffreys', 1.0, 1e4]],
            'ecc': [0.1, 1, ['Uniform', 0., 1.]],
            'omega': [0.1, 1, ['Uniform', 0., 2*np.pi]],
            'ma0': [0.1, 1, ['Uniform', 0., 2*np.pi]],
