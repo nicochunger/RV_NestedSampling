@@ -165,13 +165,13 @@ def lnlike(param, parnames, fixedpardict, data, covdict, **kwargs):
         rhk5 = data[instrument]['data']['rhk'].values + 5
 
         # Get pre-computed covariance matrix
-        cov = covdict[instrument].copy()
+        #cov = covdict[instrument].copy()
+        #cov += np.diag(ey**2 + jitter**2)
 
-        # Add diagonal with noise.
-        # TODO Change model without covariance matrix
         jitter = pardict[f'{instrument}_jitter']
-        # TODO Add noise dependent on rhk
-        cov += np.diag(ey**2 + jitter**2)
+        slope = pardict[f'{instrument}_slope']
+        rhk_noise = jitter + slope * rhk5
+        noise = ey**2 + rhk_noise**2
 
         # Construct model
         try:
@@ -181,7 +181,8 @@ def lnlike(param, parnames, fixedpardict, data, covdict, **kwargs):
 
         # Compute likelihood
         res = y - pardict[f'{instrument}_offset'] - rvm
-        lnlike[i] = likelihood.lnlike_gaussian(res, cov)
+        # lnlike[i] = likelihood.lnlike_gaussian(res, cov)
+        lnlike[i] = likelihood.lnlike_gregory(res, noise)
 
     return np.sum(lnlike)
 

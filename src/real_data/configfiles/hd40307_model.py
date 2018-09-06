@@ -22,8 +22,8 @@ datadict = {
 # ---------------------
 #        PLANETS
 # --------------------
-fpdict = {'k1': [0.0, 1, ['Uniform', 0., 200.], 0.5],
-          'period': [0.0, 1, ['Jeffreys', 1.0, 1e4], 0.13],
+fpdict = {'k1': [0.0, 1, ['Uniform', 0., 200.]],
+          'period': [0.0, 1, ['Jeffreys', 1.0, 1e4]],
           'ecc': [0.1, 1, ['Beta', 0.867, 3.03]],
           'omega': [0.1, 1, ['Uniform', 0., 2*pi]],
           'ma0': [0.1, 1, ['Uniform', 0., 2*pi]],
@@ -39,8 +39,8 @@ driftdict = {'v0': [0.0, 0, ['Uniform', -1000., 1000.]],
              }
 
 harpsdict = {'offset': [31334.45, 1, ['Uniform', 28996, 33668]],
-             'jitter': [0.75, 1, ['ModJeffreys', 1.0, 99.0]],
-             'slope': [0.0, 1, ['Uniform', -200., 200.]],
+             'jitter': [0.75, 1, ['Uniform', 0., 50.]],
+             'slope': [0.0, 1, ['Uniform', 0., 50.]],
              }
 
 configdicts = [datadict, fpdict, driftdict, harpsdict]

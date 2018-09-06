@@ -9,6 +9,12 @@ from math import pi, log
 import os
 
 
+def lnlike_gregory(residuals, noise):
+    N = len(residuals)
+    cte = -0.5 * N * np.log(2*np.pi)
+    return cte - np.log(np.prod(noise)) - np.sum(residuals**2 / (2 * noise))
+
+
 def lnlike_gaussian(residuals, K):
     """
     Compute likelihood for normally distributed errors.
