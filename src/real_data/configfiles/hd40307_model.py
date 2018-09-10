@@ -43,4 +43,6 @@ harpsdict = {'offset': [31334.45, 1, ['Uniform', 28996, 33668]],
              'slope': [0.0, 1, ['Uniform', 0., 50.]],
              }
 
+planet_periods = [9.62, 20.41, 4.31, 51.56]
+
 configdicts = [datadict, fpdict, driftdict, harpsdict]

@@ -11,6 +11,7 @@ import datetime
 import argparse
 import pickle
 import subprocess
+import pdb
 
 # PolyChord imports
 import PyPolyChord as PPC
@@ -38,6 +39,9 @@ parser.add_argument('-prec', type=float, default=0.01,
 
 parser.add_argument('--noclust', action='store_false',
                     help='If clustering should be turned off.')
+
+parser.add_argument('--narrow', action='store_true',
+                    help='Wether to use the narrow priors for the periods.')
 
 parser.add_argument('--resume', action='store_true',
                     help='If the previous run should be resumed.')
@@ -69,7 +73,8 @@ modelpath = f'configfiles/hd40307_model.py'
 
 # Generate dictionaries
 parnames, datadict, priordict, fixedpardict = config.read_config(
-    modelpath, nplanets)
+    modelpath, nplanets, args_params.narrow)
+
 covdict = preprocess(datadict)[0]  # Covariance dictionary
 
 # Number of dimensions is the number of parameters in the model
@@ -97,6 +102,8 @@ def prior(hypercube):
 # Filepath for the polychord data and storing the samples
 timecode = time.strftime("%m%d_%H%M")
 folder_path = f'hd40307_{nplanets}a_' + timecode
+if args_params.narrow:
+    folder_path = f'hd40307_{nplanets}b_' + timecode
 if not args_params.save:
     # Save the samples in a dump folder if the data shouldn't be saved
     # This overwrites any data saved before of the same model
@@ -152,6 +159,8 @@ result = np.reshape(result, (1, 6))
 
 header = 'run_time logZ logZerr log10Z nlive prec'
 filename = f'results_{nplanets}a.txt'
+if args_params.narrow:
+    filename = f'results_{nplanets}b.txt'
 
 try:
     # Append results to file

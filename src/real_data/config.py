@@ -1,8 +1,9 @@
 import imp
 import numpy as np
 import pandas as pd
-
+from pprint import pprint
 import priors
+import copy
 
 
 # def read_config(configfile):
@@ -33,24 +34,35 @@ import priors
 #     return parnames, datadict, priordict, fixedpardict
 
 
-def read_config(configfile, nplanets):
+def read_config(configfile, nplanets, narrow):
     """
     Initialises a sampler object using parameters in config.
 
     :param string config: string indicating path to configuration file.
+    :param int nplanets: integer with the number of planets to be used in the model
+    :param bool narrow: Boolean indicating whether to use the narrow priors for 
+                        the planet periods.
     """
 
     # Import configuration file as module
     c = imp.load_source('c', configfile)
 
-    # Make copy of all relavant dictionaries
+    # Make copy of all relavant dictionaries and lists
     datadict, fpdict, driftdict, harpsdict = map(dict.copy, c.configdicts)
-
+    planet_periods = list.copy(c.planet_periods)
     # Create input_dict in acordance to number of planets in the model
     input_dict = {'harps': harpsdict, 'drift1': driftdict}
     for i in range(1, nplanets+1):
-        input_dict.update({f'planet{i}': fpdict.copy()})
+        input_dict.update({f'planet{i}': copy.deepcopy(fpdict)})
+        if narrow:
+            # Change the prior range for the planet periods
+            # Lower limit
+            input_dict[f'planet{i}']['period'][2][1] = planet_periods[i-1] - 4
+            # Upper limit
+            input_dict[f'planet{i}']['period'][2][2] = planet_periods[i-1] + 4
 
+    print('\nInput Dict')
+    pprint(input_dict)
     # Create prior instances
     priordict = priors.prior_constructor(input_dict, {})
 

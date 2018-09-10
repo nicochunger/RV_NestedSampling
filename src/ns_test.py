@@ -12,10 +12,12 @@ from scipy.stats import norm
 path = "../data/spectral_lines.txt"
 data = np.loadtxt(path, delimiter=" ")
 
-channel = data[:,0]
-signal = data[:,1]
+channel = data[:, 0]
+signal = data[:, 1]
 
 # --------------------- Function definitions -----------------------------
+
+
 def model(T, nu, nu0=37, sigmaL=2.0):
     """ Model 1 for the spectral lines model. """
     return T * np.exp(-(nu - nu0)**2 / (2 * sigmaL**2))
@@ -32,24 +34,29 @@ def Likelihood(T, sigma=1.0):
     else:
         lh = np.zeros(Tlen)
         for i in range(Tlen):
-            exponent = -1 * np.sum((signal - model(T[i], channel))**2) / (2*sigma**2)
-            lh[i] = (2*np.pi)**(-float(N)/2.0) * sigma**(-float(N)) * np.exp(exponent)
+            exponent = -1 * \
+                np.sum((signal - model(T[i], channel))**2) / (2*sigma**2)
+            lh[i] = (2*np.pi)**(-float(N)/2.0) * \
+                sigma**(-float(N)) * np.exp(exponent)
         return lh
+
 
 def logLikelihood(T, sigma=1.0):
     """ Analytic expression of the log of the Likelihhod for the spectral lines problem."""
     N = len(data)
-    Tlen = len(T)
-    if Tlen == 1:
+    if type(T) == float:
         exponent = -1 * np.sum((signal - model(T, channel))**2) / (2*sigma**2)
         logL = (-N/2.)*np.log(2*np.pi) - N*np.log(sigma) + exponent
         return logL
     else:
+        Tlen = len(T)
         logL = np.zeros(Tlen)
         for i in range(Tlen):
-            exponent = -1 * np.sum((signal - model(T[i], channel))**2) / (2*sigma**2)
+            exponent = -1 * \
+                np.sum((signal - model(T[i], channel))**2) / (2*sigma**2)
             logL[i] = (-N/2.)*np.log(2*np.pi) - N*np.log(sigma) + exponent
         return logL
+
 
 class ActiveObj:
     def __init__(self, ppf, logL):
@@ -84,13 +91,22 @@ class ActiveObj:
         sys.exit("Evolve() couldn't find a sample with greater Likelihood \
                   within the sample limit constraint")
 
+
+def PLUS(x, y):
+    """ Logarithmic sum. """
+    if x > y:
+        return x + np.log(1+np.exp(y-x))
+    else:
+        return y + np.log(1+np.exp(x-y))
+
+
 def bimodal(loc1, sigma1, loc2, sigma2):
     """ Creates a bimodal probability density function with both
     mean values and standart deviation given as parameter.
 
     Returns a single variable function with the chosen bimodal distribution."""
     def foo(x):
-        return np.log(norm.pdf(x, loc1, sigma1) + norm.pdf(x, loc2, sigma2))
+        return np.logaddexp(norm.logpdf(x, loc1, sigma1), norm.logpdf(x, loc2, sigma2))
 
     return foo
 # --------------------------------------------------------------------------
@@ -129,38 +145,40 @@ def NestedSampling(N, priorPPF, logL, iterations=50, tol=1e-2):
     """
     evidences = []
     for i in range(iterations):
-        print("N = {} \t iteration = {}/{}".format(N, i+1,iterations))
+        print("N = {} \t iteration = {}/{}".format(N, i+1, iterations))
 
         # Definition of variables and objects
-        N_MAX = 20*N # Maximum samples
-        Obj = [] # List of active objects
-        Samples = [] # All Samples
-        xi = [1] # Prior mass points (inicially 1)
-        xi.append(ns.sampleXi(N, xi[-1])) # Calculate next xi to be one step ahead
-        logw = np.log(1 - xi[-1]) # First width in prior mass
-        H = 0.0 # Information
-        logZ = -sys.float_info.max # log(Evidence, initially 0)
-        logZnew = logZ # Updated Evidence
-        nest = 0 # Current iteration of the Nested Sampling loop
+        N_MAX = 20*N  # Maximum samples
+        Obj = []  # List of active objects
+        Samples = []  # All Samples
+        xi = [1]  # Prior mass points (inicially 1)
+        # Calculate next xi to be one step ahead
+        xi.append(ns.sampleXi(N, xi[-1]))
+        logw = np.log(1 - xi[-1])  # First width in prior mass
+        H = 0.0  # Information
+        logZ = -sys.float_info.max  # log(Evidence, initially 0)
+        logZnew = logZ  # Updated Evidence
+        nest = 0  # Current iteration of the Nested Sampling loop
 
         # Initialization of first objects
         for i in range(N):
-            Obj.append(ActiveObj(priorPPF, logL)) # Creates an Active Object
-            Obj[i].Sample() # Samples it
+            Obj.append(ActiveObj(priorPPF, logL))  # Creates an Active Object
+            Obj[i].Sample()  # Samples it
 
         # ------Begin Nested Sampling loop---------
         termination = False
-        while not termination: #end * N * H:
+        while not termination:  # end * N * H:
             # Search for worst Likelihood within the active objects
             lhoods = np.array([obj.logLhood for obj in Obj])
             worst = np.argmin(lhoods)
-            currZ = logw + Obj[worst].logLhood # Weight of object
+            currZ = logw + Obj[worst].logLhood  # Weight of object
             Obj[worst].logwt = currZ
 
             # Update Evidence and Information
             logZnew = ns.PLUS(logZ, currZ)
             log1 = Obj[worst].logLhood
-            H = np.exp(currZ - logZnew) * log1 + np.exp(logZ - logZnew) + (H+logZ) - logZnew
+            H = np.exp(currZ - logZnew) * log1 + \
+                np.exp(logZ - logZnew) + (H+logZ) - logZnew
             logZ = logZnew
 
             # Save all chosen samples
@@ -170,9 +188,10 @@ def NestedSampling(N, priorPPF, logL, iterations=50, tol=1e-2):
             params = [obj.param for obj in Obj]
             sampLimit = [min(params), max(params)]
 
-            #Kill worst object in favour of a new object
-            Lstar = Obj[worst].logLhood # Update Likelihood constraint
-            Obj[worst].Evolve(Lstar, sampLimit) # Evolve the old sample for a new one
+            # Kill worst object in favour of a new object
+            Lstar = Obj[worst].logLhood  # Update Likelihood constraint
+            # Evolve the old sample for a new one
+            Obj[worst].Evolve(Lstar, sampLimit)
 
             # Update next prior mass value
             # xi is always one step ahead to calculate wi with the trapezoidal rule
@@ -189,7 +208,7 @@ def NestedSampling(N, priorPPF, logL, iterations=50, tol=1e-2):
             if nest >= N_MAX:
                 print("Loop exceeded maximum iteration number of {}".format(N_MAX))
                 break
-        #--------End of Nested Sampling loop----------------
+        # --------End of Nested Sampling loop----------------
 
         # Final correction
         logw = -float(nest)/N - np.log(float(N))
@@ -198,21 +217,25 @@ def NestedSampling(N, priorPPF, logL, iterations=50, tol=1e-2):
             obj.logwt = logw + obj.logLhood
             final_corr = ns.PLUS(final_corr, obj.logwt)
             logZnew = ns.PLUS(logZ, obj.logwt)
-            H = np.exp(obj.logwt - logZnew) * obj.logLhood + np.exp(logZ - logZnew) + (H+logZ) - logZnew
+            H = np.exp(obj.logwt - logZnew) * obj.logLhood + \
+                np.exp(logZ - logZnew) + (H+logZ) - logZnew
             logZ = logZnew
 
         evidences.append(np.exp(logZ))
 
         # Plotting of solution
         xi = np.array(xi[:-2], dtype=float)
-        lvector = np.array([np.exp(obj.logLhood) for obj in Samples], dtype=float)
+        lvector = np.array([np.exp(obj.logLhood)
+                            for obj in Samples], dtype=float)
 
-
-    print("Average evidence for N={} and {} iterations: {}".format(N,iterations,np.mean(evidences)))
+    print("Average evidence for N={} and {} iterations: {}".format(
+        N, iterations, np.mean(evidences)))
+    print(
+        f"Standard deviation for N={N} and {iterations} iterations: {np.std(evidences)}")
     return np.array(evidences), xi, lvector
 # --------------------------------------------------------------------------
 
 # # Plot of data
-#plt.figure()
+# plt.figure()
 #plt.plot(channel, signal, 'k--*')
-#plt.show()
+# plt.show()

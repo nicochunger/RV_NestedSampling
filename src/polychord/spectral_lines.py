@@ -2,10 +2,28 @@
 # -*- coding: utf-8 -*-
 # file: spectral_lines.py
 
+import time
+import datetime
 import numpy as np
 import PyPolyChord as PPC
 from PyPolyChord.settings import PolyChordSettings
 from PyPolyChord.priors import UniformPrior
+
+
+# Remove stack size limit
+import resource
+resource.setrlimit(resource.RLIMIT_STACK,
+                   (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
+
+# Read arguments
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('-nlive', type=int, default=25,
+                    help='Number of live points in nested sampling. As: nlive*ndim')
+parser.add_argument('-nrep', type=int, default=3,
+                    help='Number of repeats in slice sampling. As: nrep*ndim')
+
+args_params = parser.parse_args()
 
 # Importing data
 path = "../../data/spectral_lines.txt"
@@ -46,23 +64,32 @@ def prior(hypercube):
 
 
 settings = PolyChordSettings(nDims, nDerived)
-settings.nlive = 5000
+settings.nlive = args_params.nlive * nDims
+settings.num_repeats = args_params.nrep * nDims
 settings.file_root = 'gregory'
 settings.do_clustering = True
 settings.read_resume = False
 
+start = time.time()
+
 output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
 
-print(f'Z = {np.exp(output.logZ)}')
+# End time
+end = time.time()
+Dt = end - start
+print(f'\nTotal run time was: {datetime.timedelta(seconds=int(Dt))}')
 
-try:
-    import getdist.plots
-    import matplotlib.pyplot as plt
-    # plt.close('all')
-    posterior = output.posterior
-    g = getdist.plots.getSubplotPlotter()
-    # print("hola")
-    g.triangle_plot(posterior, filled=True)
-    plt.show()
-except ImportError:
-    print("Install matplotlib and getdist for plotting examples")
+print(f'\nZ = {np.exp(output.logZ)}')
+
+
+# try:
+#     import getdist.plots
+#     import matplotlib.pyplot as plt
+#     # plt.close('all')
+#     posterior = output.posterior
+#     g = getdist.plots.getSubplotPlotter()
+#     # print("hola")
+#     g.triangle_plot(posterior, filled=True)
+#     plt.show()
+# except ImportError:
+#     print("Install matplotlib and getdist for plotting examples")
