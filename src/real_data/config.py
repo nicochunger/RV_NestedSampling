@@ -40,8 +40,8 @@ def read_config(configfile, nplanets, narrow):
 
     :param string config: string indicating path to configuration file.
     :param int nplanets: integer with the number of planets to be used in the model
-    :param bool narrow: Boolean indicating whether to use the narrow priors for 
-                        the planet periods.
+    :param float narrow: Float indicating how wide to take the narrow priors.
+                         If it is 0, broad priors will be used instead.
     """
 
     # Import configuration file as module
@@ -50,18 +50,27 @@ def read_config(configfile, nplanets, narrow):
     # Make copy of all relavant dictionaries and lists
     datadict, fpdict, driftdict, harpsdict = map(dict.copy, c.configdicts)
     planet_periods = list.copy(c.planet_periods)
+    periods_std = list.copy(c.periods_std)
     # Create input_dict in acordance to number of planets in the model
     input_dict = {'harps': harpsdict, 'drift1': driftdict}
     for i in range(1, nplanets+1):
         input_dict.update({f'planet{i}': copy.deepcopy(fpdict)})
         if narrow:
             # Change the prior range for the planet periods
-            # Lower limit
-            input_dict[f'planet{i}']['period'][2][1] = planet_periods[i-1] - 4
-            # Upper limit
-            input_dict[f'planet{i}']['period'][2][2] = planet_periods[i-1] + 4
+            # # Lower limit
+            # input_dict[f'planet{i}']['period'][2][1] = (1-narrow) * \
+            #     planet_periods[i-1]
+            # # Upper limit
+            # input_dict[f'planet{i}']['period'][2][2] = (1+narrow) * \
+            #     planet_periods[i-1]
 
-    print('\nInput Dict')
+            # Lower limit
+            input_dict[f'planet{i}']['period'][2][1] = planet_periods[i-1] - \
+                5*periods_std[i-1]
+            # Upper limit
+            input_dict[f'planet{i}']['period'][2][2] = planet_periods[i-1] + \
+                5*periods_std[i-1]
+
     pprint(input_dict)
     # Create prior instances
     priordict = priors.prior_constructor(input_dict, {})

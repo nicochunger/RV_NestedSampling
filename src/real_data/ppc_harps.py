@@ -32,16 +32,15 @@ parser.add_argument('-nrep', type=int, default=3,
                     help='Number of repeats in slice sampling. As: nrep*ndim')
 parser.add_argument('-prec', type=float, default=0.01,
                     help='Precision criterion for termination.')
+parser.add_argument('-narrow', type=float, default=0,
+                    help='Wether to use the narrow priors for the periods.')
 
-# TODO Change this parameter for the new real data
+# TODO Change this parameter for other instruments (?)
 # parser.add_argument('-inst', type=str, default=1,
 #                     help='Which dataset to analyze.')
 
 parser.add_argument('--noclust', action='store_false',
                     help='If clustering should be turned off.')
-
-parser.add_argument('--narrow', action='store_true',
-                    help='Wether to use the narrow priors for the periods.')
 
 parser.add_argument('--resume', action='store_true',
                     help='If the previous run should be resumed.')
@@ -69,7 +68,7 @@ if args_params.resume:
 
 # Assign modelpath
 # modelpath = f'configfiles/hd40307_k{nplanets}.py'
-modelpath = f'configfiles/hd40307_model.py'
+modelpath = 'configfiles/hd40307_model.py'
 
 # Generate dictionaries
 parnames, datadict, priordict, fixedpardict = config.read_config(
