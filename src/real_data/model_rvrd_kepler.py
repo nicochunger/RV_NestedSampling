@@ -176,6 +176,7 @@ def lnlike(param, parnames, fixedpardict, data, covdict, **kwargs):
         # Construct model
         try:
             rvm = model(pardict, t)
+            #print(f'rvm = {rvm}')
         except RuntimeError:
             return -np.inf
 
