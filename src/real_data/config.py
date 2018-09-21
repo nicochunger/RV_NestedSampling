@@ -57,19 +57,20 @@ def read_config(configfile, nplanets, narrow):
         input_dict.update({f'planet{i}': copy.deepcopy(fpdict)})
         if narrow:
             # Change the prior range for the planet periods
-            # # Lower limit
-            # input_dict[f'planet{i}']['period'][2][1] = (1-narrow) * \
-            #     planet_periods[i-1]
-            # # Upper limit
-            # input_dict[f'planet{i}']['period'][2][2] = (1+narrow) * \
-            #     planet_periods[i-1]
-
-            # Lower limit
-            input_dict[f'planet{i}']['period'][2][1] = planet_periods[i-1] - \
-                5*periods_std[i-1]
-            # Upper limit
-            input_dict[f'planet{i}']['period'][2][2] = planet_periods[i-1] + \
-                5*periods_std[i-1]
+            if narrow <= 1:
+                # Lower limit
+                input_dict[f'planet{i}']['period'][2][1] = (1-narrow) * \
+                    planet_periods[i-1]
+                # Upper limit
+                input_dict[f'planet{i}']['period'][2][2] = (1+narrow) * \
+                    planet_periods[i-1]
+            elif narrow > 1:
+                # Lower limit
+                input_dict[f'planet{i}']['period'][2][1] = planet_periods[i-1] - \
+                    narrow*periods_std[i-1]
+                # Upper limit
+                input_dict[f'planet{i}']['period'][2][2] = planet_periods[i-1] + \
+                    narrow*periods_std[i-1]
 
     pprint(input_dict)
     # Create prior instances

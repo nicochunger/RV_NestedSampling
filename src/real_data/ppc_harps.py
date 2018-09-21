@@ -12,6 +12,7 @@ import argparse
 import pickle
 import subprocess
 import pdb
+import os
 
 # PolyChord imports
 import PyPolyChord as PPC
@@ -58,21 +59,30 @@ nplanets = args_params.n  # Number of Planets in the model
 
 # Change number of plantes if resume is true
 dirname = '/media/nunger/Windows/Nico/Facu/Tesis/polychord_chains/'
-# FIXME This takes the last run with the most planets which may not be the one
-# I should only look for the dates/times of the runs
 if args_params.resume:
-    prev_run = subprocess.check_output(
-        'ls -d '+dirname+'*/', shell=True).decode('utf-8').replace(dirname, '').split('/\n')[-2]
+    runs = subprocess.check_output(
+        'ls -d '+dirname+'*/', shell=True).decode('utf-8').replace(dirname, '').split('/\n')
+    dates = []
+    for run in runs:
+        dates.append(run[-9:])
+    dates.remove('dump')
+    dates.sort()
+    for run in runs:
+        if dates[-1] in run:
+            prev_run = run
+    print(f'Corrida a resumir: {prev_run}')
     # Extract the number of planets analyzed in previous run
     nplanets = int(prev_run.split('_')[1][0])
 
 # Assign modelpath
-# modelpath = f'configfiles/hd40307_k{nplanets}.py'
 modelpath = 'configfiles/hd40307_model.py'
 
 # Generate dictionaries
 parnames, datadict, priordict, fixedpardict = config.read_config(
     modelpath, nplanets, args_params.narrow)
+
+print('\n Parameter names and order:')
+print(parnames)
 
 covdict = preprocess(datadict)[0]  # Covariance dictionary
 
@@ -122,6 +132,13 @@ settings.read_resume = False
 if args_params.resume:
     settings.read_resume = args_params.resume
     settings.base_dir = dirname+prev_run
+
+# Save Parameter names list
+try:
+    pickle.dump(parnames, open(settings.base_dir+'/parnames.p', 'wb'))
+except:
+    os.makedirs(settings.base_dir)
+    pickle.dump(parnames, open(settings.base_dir+'/parnames.p', 'wb'))
 
 # Run PolyChord
 output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)

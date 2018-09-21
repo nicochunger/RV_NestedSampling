@@ -41,7 +41,7 @@ class uniform_gen(rv_continuous):
     def _cdf(self, x, xmin, xmax):
         return stats.uniform.cdf(x, loc=xmin, scale=xmax - xmin)
 
-    def ppf(self, q, xmin, xmax):
+    def _ppf(self, q, xmin, xmax):
         return xmin + (xmax - xmin)*q
         #return stats.uniform.ppf(q, loc=xmin, scale=xmax - xmin)
 
@@ -70,7 +70,7 @@ class jeffreys_gen(rv_continuous):
         cdf = n.where((x < xmax), cdf, 1.0)
         return cdf
 
-    def ppf(self, q, xmin, xmax):
+    def _ppf(self, q, xmin, xmax):
         return xmin * (float(xmax)/xmin) ** q
         # dx = (xmax - xmin)*step
         # x = n.arange(xmin, xmax + dx, dx)
@@ -107,7 +107,7 @@ class modjeff_gen(rv_continuous):
         cdf = n.where(x < xmax, cdf, 1.0)
         return cdf
 
-    def ppf(self, q, x0, xmax):
+    def _ppf(self, q, x0, xmax):
         return x0*((1+float(xmax)/x0) ** q) - x0
         # dx = xmax*step
         # x = n.arange(0, xmax + dx, dx)
@@ -243,6 +243,30 @@ class truncnormU_gen(rv_continuous):
         return interpolate.interp1d(cdf, x)(q)
 
     
+class truncrayleigh_gen(rv_continuous):
+    def _argcheck(self, sigma, xmax):
+        return (sigma > 0)
+
+    def _pdf(self, x, sigma, xmax):
+        A1 = 1 - n.exp(-xmax**2/(2*sigma**2))
+        n1 = ((x/sigma**2) * n.exp(-x**2/(2*sigma**2)))/A1
+        return n.where((x >= 0) & (x < xmax), n1, 0.0)
+
+    def _cdf(self, x, sigma, xmax):
+        A1 = 1 - n.exp(-xmax**2/(2*sigma**2))
+        cdf = 1 - n.exp(-x**2/(2*sigma**2))
+        cdf = cdf/A1
+        # Consider the limits of the uniform
+        cdf = n.where((x >= 0), cdf, 0.0)
+        cdf = n.where((x < xmax), cdf, 1.0)
+        return cdf
+
+    def _ppf(self, q, sigma, xmax):
+        A = 1 - n.exp(-xmax**2/(2*sigma**2))
+        ppf = n.sqrt(-2*sigma**2*n.log(1-(q*A)))
+        return ppf
+
+
 class truncnormJ_gen(rv_continuous):
     def _argcheck(self, mu, sigma, xmin, xmax):
         return (sigma > 0)
@@ -434,6 +458,8 @@ AsymmetricNormal = asymmetricnorm_gen(name='Asymmetric normal distribution',
                                       shapes='mu, sigma1, sigma2')
 TruncatedUNormal = truncnormU_gen(name='Truncated normal distribution',
                                   shapes='mu, sigma, xmin, xmax')
+TruncatedRayleigh = truncrayleigh_gen(name='Truncated Rayleigh Distribution',
+                                      shapes='sigma, xmax')
 PowerLaw = powerlaw_gen(name='Power law distribution',
                         shapes='alpha, xmin, xmax')
 DoublePowerLaw = doublepowerlaw_gen(name='Double Power law distribution',
@@ -441,7 +467,8 @@ DoublePowerLaw = doublepowerlaw_gen(name='Double Power law distribution',
 Sine = sine_gen(name='Sine distribution', shapes='xmin, xmax', a=0.0,
                 b=180.0)
 Alpha = alpha_gen(name = 'Alpha distribution', shapes = 'a', a = 0.0)
-Beta = beta_gen(name='Beta distribution', shapes='a, b', a=0.0, b=1.0)
+#Beta = beta_gen(name='Beta distribution', shapes='a, b', a=0.0, b=1.0)
+Beta = stats.beta
 Gamma = gamma_gen(name='Gamma distribution', shapes='alpha, beta',
                        a=0.0)
 

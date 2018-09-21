@@ -18,34 +18,41 @@ import pickle
 import os
 
 # PolyChord imports
-import PyPolyChord as PPC 
+import PyPolyChord as PPC
 from PyPolyChord.settings import PolyChordSettings
 
 # Read arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('-n', type=int, default=1, help='Number of planets in model.')
-parser.add_argument('-nlive', type=int, default=25, help='Number of live points in nested sampling. As: nlive*ndim')
-parser.add_argument('-nrep', type=int, default=3, help='Number of repeats in slice sampling. As: nrep*ndim')
-parser.add_argument('-prec', type=float, default=0.01, help='Precision criterion for termination.')
-parser.add_argument('-dfile', type=int, default=1, help='Which dataset to analyze.')
-parser.add_argument('--clust', action='store_true', help='If clustering will be activated.')
-parser.add_argument('--narrow', action='store_true', help='If the narrowpriors will be used.')
+parser.add_argument('-n', type=int, default=1,
+                    help='Number of planets in model.')
+parser.add_argument('-nlive', type=int, default=25,
+                    help='Number of live points in nested sampling. As: nlive*ndim')
+parser.add_argument('-nrep', type=int, default=3,
+                    help='Number of repeats in slice sampling. As: nrep*ndim')
+parser.add_argument('-prec', type=float, default=0.01,
+                    help='Precision criterion for termination.')
+parser.add_argument('-dfile', type=int, default=1,
+                    help='Which dataset to analyze.')
+parser.add_argument('--clust', action='store_true',
+                    help='If clustering will be activated.')
+# TODO Add the narrow priors for each dataset
+parser.add_argument('--narrow', action='store_true',
+                    help='If the narrowpriors will be used.')
 args_params = parser.parse_args()
 
-datafile = args_params.dfile # Data set to analyze
-assert datafile in range(1,7), "Incorrect datafile. Has to be between 1 and 6."
+datafile = args_params.dfile  # Data set to analyze
+assert datafile in range(
+    1, 7), "Incorrect datafile. Has to be between 1 and 6."
 
-# Initialize start time to measure run time
-start = time.time()
 
 # Generate dictionaries
-nplanets = args_params.n # Number of Planets in the model
+nplanets = args_params.n  # Number of Planets in the model
 modelpath = f'configfiles/eprv3rv01_k{nplanets}.py'
-if args_params.narrow and nplanets!=0:
+if args_params.narrow and nplanets != 0:
     splitpath = modelpath.split('.')
     modelpath = splitpath[0] + '_narrowprior.' + splitpath[1]
 
-#---- Edit configfile to set the correct datafile ------
+# ---- Edit configfile to set the correct datafile ------
 with open(path+modelpath) as f:
     lines = f.readlines()
 
@@ -57,14 +64,17 @@ for i in range(len(lines)):
 with open(path+modelpath, "w") as f:
     # Write edited file
     f.write(''.join(lines))
-#--------------------------------------------------------
+# --------------------------------------------------------
 
-parnames, datadict, priordict, fixedpardict = config.read_config(path + modelpath)
-covdict = preprocess(datadict)[0] # Covariance dictionary
+parnames, datadict, priordict, fixedpardict = config.read_config(
+    path + modelpath)
+covdict = preprocess(datadict)[0]  # Covariance dictionary
 
-nDims = 2 + (nplanets * 5) # Number of parameters to fit
-assert nDims == len(parnames), "Number of parameters and dimensions don't match"
+nDims = 2 + (nplanets * 5)  # Number of parameters to fit
+assert nDims == len(
+    parnames), "Number of parameters and dimensions don't match"
 nDerived = 0
+
 
 def logLikelihood(theta):
     """ Log Likelihood for the planet model. """
@@ -81,6 +91,7 @@ def prior(hypercube):
         theta[i] = priordict[parnames[i]].ppf(x)
 
     return theta
+
 
 dirname = os.path.dirname(os.path.abspath(__file__))
 timecode = time.strftime("%m%d_%H%M")
@@ -101,37 +112,50 @@ settings.num_repeats = nDims * args_params.nrep
 #settings.feedback = 1
 settings.precision_criterion = args_params.prec
 
+# Save Parameter names list
+try:
+    pickle.dump(parnames, open(settings.base_dir+'/parnames.p', 'wb'))
+except:
+    os.makedirs(settings.base_dir)
+    pickle.dump(parnames, open(settings.base_dir+'/parnames.p', 'wb'))
+
+# Initialize start time to measure run time
+start = time.time()
+
 # Run PolyChord
 output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
+
 # Parameter names
 latexnames = [r'\sigma_J', r'C']
 for j in range(nplanets):
-    latexnames.extend([fr'K_{j}', fr'P_{j}', fr'e_{j}', fr'\omega_{j}', fr'M_{j}'])
+    latexnames.extend(
+        [fr'K_{j}', fr'P_{j}', fr'e_{j}', fr'\omega_{j}', fr'M_{j}'])
 paramnames = [(x, latexnames[i]) for i, x in enumerate(parnames)]
 
 output.make_paramnames_files(paramnames)
 
-end = time.time() # End time
+end = time.time()  # End time
 Dt = end - start
 print(f'\nTotal run time was: {datetime.timedelta(seconds=int(Dt))}')
-print(f'\nlog10(Z) = {output.logZ*0.43429} \n') # Log10 of the evidence
+print(f'\nlog10(Z) = {output.logZ*0.43429} \n')  # Log10 of the evidence
 
 # Save evidence and other relevant data
 result = np.zeros(6+nDims)
-result[0] = Dt # Run time
-result[1] = output.logZ # Total evidence in log_e
-result[2] = output.logZerr # Error for the evidence
-result[3] = output.logZ * np.log10(np.e) # Total evidence in log_10
-result[4] = settings.nlive # Number of live points
-result[5] = settings.precision_criterion # Precision crtierion
-result[6:] = np.mean(output.posterior.samples[-500:], axis=0) # Average for each parameter from the posterior
-result = np.reshape(result, (1,6+nDims))
+result[0] = Dt  # Run time
+result[1] = output.logZ  # Total evidence in log_e
+result[2] = output.logZerr  # Error for the evidence
+result[3] = output.logZ * np.log10(np.e)  # Total evidence in log_10
+result[4] = settings.nlive  # Number of live points
+result[5] = settings.precision_criterion  # Precision crtierion
+# Median for each parameter from the posterior
+result[6:] = np.median(output.posterior.samples, axis=0)
+result = np.reshape(result, (1, 6+nDims))
 
 header = 'run_time logZ logZerr log10Z nlive prec '
 for i in range(nDims):
     header += parnames[i]
     if i < nDims-1:
-        header += ' ' # Add space after each parameter, except the last one
+        header += ' '  # Add space after each parameter, except the last one
 
 #dataset = datadict['eprv']['datafile'][-8:-4]
 # Name of data file
@@ -146,14 +170,14 @@ try:
     if len(np.shape(f)) == 1:
         f = np.reshape(f, (1, 6+nDims))
     results = np.append(f, result, axis=0)
-    np.savetxt(filename,results, header=header, fmt='%.8e')
+    np.savetxt(filename, results, header=header, fmt='%.8e')
 except:
     # File does not exist, must create it first
     np.savetxt(filename, result, header=header, fmt='%.8e')
 
-# Save output data as a pickle file
-pickle_file = settings.base_dir + '/output.p'
-pickle.dump(output, open(pickle_file, "wb"))
+# # Save output data as a pickle file
+# pickle_file = settings.base_dir + '/output.p'
+# pickle.dump(output, open(pickle_file, "wb"))
 
 # # Plotting
 # if nDims < 8:
@@ -166,7 +190,3 @@ pickle.dump(output, open(pickle_file, "wb"))
 #         plt.show()
 #     except ImportError:
 #         print("Install matplotlib and getdist for plotting examples")
-
-
-
-
