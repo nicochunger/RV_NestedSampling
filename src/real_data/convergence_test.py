@@ -43,7 +43,7 @@ else:
             ax[n-1].cla()
             ax[n-1].plot(data[f'planet{n}_period'], '.')
             ax[n-1].set_title(
-                f'Planet {n} Period, Median = {np.median(data[f"planet{n}_period"]):4.2f}')
+                f'Planet {n}; Median period = {np.median(data[f"planet{n}_period"]):4.2f}')
             #plt.ylim([-200, 10200])
         plt.tight_layout()
         plt.show()

@@ -29,7 +29,7 @@ modelpath = path + 'configfiles/hd40307_model.py'
 
 # Generate dictionaries
 parnames, datadict, priordict, fixedpardict = config.read_config(
-    modelpath, nplanets, args_params.narrow)
+    modelpath, nplanets, False)
 
 print('\n Parameter names and order:')
 print(parnames)

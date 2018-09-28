@@ -35,8 +35,6 @@ def trueanomaly(M, ecc, niterationmax=1e4):
 
     return nu
 
-# TODO Check the role of this in the real RV data
-
 
 def preprocess(datadict,):
     """
@@ -142,7 +140,7 @@ def model(pardict, time):
 
     # # Add secular acceleration
     tt = (time - pardict['drift1_tref'])/365.25
-    rv_planet[-1] = unitconstant * (v0 + lin*tt + qua*tt**2 + cub*tt*3)
+    rv_planet[-1] = unitconstant * (v0 + lin*tt + qua*tt**2 + cub*tt**3)
 
     return rv_planet.sum(axis=0)
 
