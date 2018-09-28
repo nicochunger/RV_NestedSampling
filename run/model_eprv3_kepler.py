@@ -135,7 +135,7 @@ def model(pardict, time):
         
     # Add secular acceleration
     tt = (time - pardict['drift1_tref'])/365.25
-    rv_planet[-1] = lin*tt + qua*tt**2 + cub*tt*3
+    rv_planet[-1] = lin*tt + qua*tt**2 + cub*tt**3
 
     return v0 + rv_planet.sum(axis=0)
     

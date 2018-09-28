@@ -8,18 +8,29 @@ path = '/home/nunger/tesis/codigo/run/'
 sys.path.append(path)
 
 # Dependencies
-from model_eprv3_kepler import lnlike, lnprior, preprocess
-import config
-import numpy as np
+# Standard libraries
 import time
 import datetime
 import argparse
-import pickle
 import os
+
+# Related Third party imports
+import numpy as np
+import pandas as pd
+import pickle
+
+# Local libraries
+from model_eprv3_kepler import lnlike, lnprior, preprocess
+import config
 
 # PolyChord imports
 import PyPolyChord as PPC
 from PyPolyChord.settings import PolyChordSettings
+
+# Remove stack size limit
+import resource
+resource.setrlimit(resource.RLIMIT_STACK,
+                   (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
 
 # Read arguments
 parser = argparse.ArgumentParser()
@@ -33,41 +44,24 @@ parser.add_argument('-prec', type=float, default=0.01,
                     help='Precision criterion for termination.')
 parser.add_argument('-dfile', type=int, default=1,
                     help='Which dataset to analyze.')
-parser.add_argument('--clust', action='store_true',
-                    help='If clustering will be activated.')
-# TODO Add the narrow priors for each dataset
+
+parser.add_argument('--noclust', action='store_true',
+                    help='If clustering will be deactivated.')
 parser.add_argument('--narrow', action='store_true',
                     help='If the narrowpriors will be used.')
+parser.add_argument('--save', action='store_true',
+                    help='If the run should be saved.')
 args_params = parser.parse_args()
 
 datafile = args_params.dfile  # Data set to analyze
 assert datafile in range(
-    1, 7), "Incorrect datafile. Has to be between 1 and 6."
-
+    1, 7), "Incorrect datafile. Has to an integer from 1 to 6."
 
 # Generate dictionaries
 nplanets = args_params.n  # Number of Planets in the model
-modelpath = f'configfiles/eprv3rv01_k{nplanets}.py'
-if args_params.narrow and nplanets != 0:
-    splitpath = modelpath.split('.')
-    modelpath = splitpath[0] + '_narrowprior.' + splitpath[1]
-
-# ---- Edit configfile to set the correct datafile ------
-with open(path+modelpath) as f:
-    lines = f.readlines()
-
-for i in range(len(lines)):
-    if 'datafile' in lines[i]:
-        # Edit that line to insert datafile
-        lines[i] = lines[i][:49] + str(datafile) + lines[i][50:]
-
-with open(path+modelpath, "w") as f:
-    # Write edited file
-    f.write(''.join(lines))
-# --------------------------------------------------------
-
+modelpath = f'configfiles/eprv3rv01_model.py'
 parnames, datadict, priordict, fixedpardict = config.read_config(
-    path + modelpath)
+    path + modelpath, nplanets, args_params.dfile, args_params.narrow)
 covdict = preprocess(datadict)[0]  # Covariance dictionary
 
 nDims = 2 + (nplanets * 5)  # Number of parameters to fit
@@ -95,21 +89,23 @@ def prior(hypercube):
 
 dirname = os.path.dirname(os.path.abspath(__file__))
 timecode = time.strftime("%m%d_%H%M")
-if 'narrowprior' not in modelpath:
-    folder_path = f'000{datafile}_{nplanets}a_' + timecode
-else:
+folder_path = f'000{datafile}_{nplanets}a_' + timecode
+if args_params.narrow:
     folder_path = f'000{datafile}_{nplanets}b_' + timecode
 
 # Define PolyChord settings
 settings = PolyChordSettings(nDims, nDerived, )
-settings.do_clustering = args_params.clust
+settings.do_clustering = not args_params.noclust
 settings.nlive = nDims * args_params.nlive
-settings.base_dir = dirname+'/chains/'+folder_path
+settings.num_repeats = nDims * args_params.nrep
+
+settings.base_dir = dirname+'/chains/'
+if args_params.save:
+    # Save all the files from this run
+    settings.base_dir = dirname+'/saved_runs/'+folder_path
 print(settings.base_dir)
 settings.file_root = modelpath[12:-3]
 settings.read_resume = False
-settings.num_repeats = nDims * args_params.nrep
-#settings.feedback = 1
 settings.precision_criterion = args_params.prec
 
 # Save Parameter names list
@@ -131,7 +127,6 @@ for j in range(nplanets):
     latexnames.extend(
         [fr'K_{j}', fr'P_{j}', fr'e_{j}', fr'\omega_{j}', fr'M_{j}'])
 paramnames = [(x, latexnames[i]) for i, x in enumerate(parnames)]
-
 output.make_paramnames_files(paramnames)
 
 end = time.time()  # End time
@@ -139,45 +134,45 @@ Dt = end - start
 print(f'\nTotal run time was: {datetime.timedelta(seconds=int(Dt))}')
 print(f'\nlog10(Z) = {output.logZ*0.43429} \n')  # Log10 of the evidence
 
+# Save output as a pickle file
+if args_params.save:
+    pickle_file = settings.base_dir + '/output.p'
+    pickle.dump(output, open(pickle_file, "wb"))
+
 # Save evidence and other relevant data
-result = np.zeros(6+nDims)
-result[0] = Dt  # Run time
-result[1] = output.logZ  # Total evidence in log_e
-result[2] = output.logZerr  # Error for the evidence
-result[3] = output.logZ * np.log10(np.e)  # Total evidence in log_10
-result[4] = settings.nlive  # Number of live points
-result[5] = settings.precision_criterion  # Precision crtierion
-# Median for each parameter from the posterior
-result[6:] = np.median(output.posterior.samples, axis=0)
-result = np.reshape(result, (1, 6+nDims))
-
-header = 'run_time logZ logZerr log10Z nlive prec '
+results = {}
+results['run_time'] = Dt
+results['logZ'] = output.logZ
+results['logZerr'] = output.logZerr
+results['log10Z'] = output.logZ * np.log10(np.e)  # Total evidence in log_10
+results['nlive'] = settings.nlive  # Number of live points
+results['prec'] = settings.precision_criterion  # Precision crtierion
+medians = np.median(output.posterior.samples, axis=0)
 for i in range(nDims):
-    header += parnames[i]
-    if i < nDims-1:
-        header += ' '  # Add space after each parameter, except the last one
+    results[parnames[i]] = medians[i]
 
-#dataset = datadict['eprv']['datafile'][-8:-4]
+# Convert to pandas DataFrame
+results = pd.DataFrame(results, index=[0])
+# Order the parameters
+order = ['run_time', 'logZ', 'logZerr', 'log10Z', 'nlive', 'prec']
+for par in parnames:
+    order.append(par)
+results = results[order]
+
 # Name of data file
-if 'narrowprior' not in modelpath:
-    filename = f'results/000{datafile}/results000{datafile}_{nplanets}a.txt'
-else:
-    filename = f'results/000{datafile}/results000{datafile}_{nplanets}b.txt'
+filename = f'results/000{datafile}/results000{datafile}_{nplanets}a_pd.txt'
+if args_params.narrow:
+    filename = f'results/000{datafile}/results000{datafile}_{nplanets}b_pd.txt'
 
 try:
     # Append results to file
-    f = np.loadtxt(filename)
-    if len(np.shape(f)) == 1:
-        f = np.reshape(f, (1, 6+nDims))
-    results = np.append(f, result, axis=0)
-    np.savetxt(filename, results, header=header, fmt='%.8e')
+    f = pd.read_csv(filename, sep='\t')
+    f = f.append(results)
+    f.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
 except:
     # File does not exist, must create it first
-    np.savetxt(filename, result, header=header, fmt='%.8e')
+    results.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
 
-# # Save output data as a pickle file
-# pickle_file = settings.base_dir + '/output.p'
-# pickle.dump(output, open(pickle_file, "wb"))
 
 # # Plotting
 # if nDims < 8:
