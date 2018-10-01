@@ -6,22 +6,17 @@
 from model_rvrd_kepler import lnlike, lnprior, preprocess
 import config
 import numpy as np
+import pandas as pd
 import time
 import datetime
 import argparse
 import pickle
 import subprocess
-import pdb
 import os
 
 # PolyChord imports
 import PyPolyChord as PPC
 from PyPolyChord.settings import PolyChordSettings
-
-# Remove stack size limit
-import resource
-resource.setrlimit(resource.RLIMIT_STACK,
-                   (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
 
 # Read arguments
 parser = argparse.ArgumentParser()
@@ -58,7 +53,7 @@ start = time.time()
 nplanets = args_params.n  # Number of Planets in the model
 
 # Change number of plantes if resume is true
-dirname = '/media/nunger/Windows/Nico/Facu/Tesis/polychord_chains/'
+dirname = '/scratch/nunger/polychord_chains/'
 if args_params.resume:
     runs = subprocess.check_output(
         'ls -d '+dirname+'*/', shell=True).decode('utf-8').replace(dirname, '').split('/\n')
@@ -66,7 +61,6 @@ if args_params.resume:
     for run in runs:
         dates.append(run[-9:])
     dates.remove('dump')
-    dates.remove('Cluster')
     dates.sort()
     for run in runs:
         if dates[-1] in run:
@@ -76,7 +70,9 @@ if args_params.resume:
     nplanets = int(prev_run.split('_')[1][0])
 
 # Assign modelpath
-modelpath = 'configfiles/hd40307_model.py'
+filepath = os.path.dirname(__file__)
+modelpath = os.path.join(
+    filepath, 'configfiles/hd40307_model_vizier_cluster.py')
 
 # Generate dictionaries
 parnames, datadict, priordict, fixedpardict = config.read_config(
@@ -164,28 +160,45 @@ pickle_file = settings.base_dir + '/output.p'
 print(pickle_file)
 pickle.dump(output, open(pickle_file, "wb"))
 
-# Save evidence and other relevant data
-result = np.zeros(6)
-result[0] = Dt  # Run time
-result[1] = output.logZ  # Total evidence in log_e
-result[2] = output.logZerr  # Error for the evidence
-result[3] = output.logZ * np.log10(np.e)  # Total evidence in log_10
-result[4] = settings.nlive  # Number of live points
-result[5] = settings.precision_criterion  # Precision crtierion
-result = np.reshape(result, (1, 6))
+########################################
 
-header = 'run_time logZ logZerr log10Z nlive prec'
-filename = f'results_{nplanets}a.txt'
+# Save evidence and other relevant data
+results = {}
+results['id'] = datetime.datetime.strptime(timecode, '%m%d_%H%M')
+results['run_time'] = Dt
+results['logZ'] = output.logZ
+results['logZerr'] = output.logZerr
+results['log10Z'] = output.logZ * np.log10(np.e)  # Total evidence in log_10
+results['nlive'] = settings.nlive  # Number of live points
+results['prec'] = settings.precision_criterion  # Precision crtierion
+medians = np.median(output.posterior.samples, axis=0)
+for i in range(nDims):
+    results[parnames[i]] = medians[i]
+
+# Convert to pandas DataFrame
+results = pd.DataFrame(results, index=[0])
+# Order the parameters
+order = ['id', 'run_time', 'logZ', 'logZerr', 'log10Z', 'nlive', 'prec']
+for par in parnames:
+    order.append(par)
+results = results[order]
+
+print('\n')
+print('Parameters:')
+print(results)
+
+# Name of data file
+filename = dirname+f'results_{nplanets}a.txt'
 if args_params.narrow:
-    filename = f'results_{nplanets}b.txt'
+    filename = dirname+f'results_{nplanets}b.txt'
 
 try:
     # Append results to file
-    f = np.loadtxt(dirname+filename)
-    if len(np.shape(f)) == 1:
-        f = np.reshape(f, (1, 6))
-    results = np.append(f, result, axis=0)
-    np.savetxt(dirname+filename, results, header=header, fmt='%.8e')
+    f = pd.read_csv(filename, sep='\t')
+    f = f.append(results)
+    f.to_csv(filename, sep='\t', index=False,
+             float_format='%8.5f', date_format='%m%d_%H%M')
 except:
     # File does not exist, must create it first
-    np.savetxt(dirname+filename, result, header=header, fmt='%.8e')
+    results.to_csv(filename, sep='\t', index=False,
+                   float_format='%8.5f', date_format='%m%d_%H%M')

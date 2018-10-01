@@ -41,7 +41,7 @@ class uniform_gen(rv_continuous):
     def _cdf(self, x, xmin, xmax):
         return stats.uniform.cdf(x, loc=xmin, scale=xmax - xmin)
 
-    def _ppf(self, q, xmin, xmax):
+    def ppf(self, q, xmin, xmax):
         return xmin + (xmax - xmin)*q
         #return stats.uniform.ppf(q, loc=xmin, scale=xmax - xmin)
 
@@ -70,7 +70,7 @@ class jeffreys_gen(rv_continuous):
         cdf = n.where((x < xmax), cdf, 1.0)
         return cdf
 
-    def _ppf(self, q, xmin, xmax):
+    def ppf(self, q, xmin, xmax):
         return xmin * (float(xmax)/xmin) ** q
         # dx = (xmax - xmin)*step
         # x = n.arange(xmin, xmax + dx, dx)
@@ -107,7 +107,7 @@ class modjeff_gen(rv_continuous):
         cdf = n.where(x < xmax, cdf, 1.0)
         return cdf
 
-    def _ppf(self, q, x0, xmax):
+    def ppf(self, q, x0, xmax):
         return x0*((1+float(xmax)/x0) ** q) - x0
         # dx = xmax*step
         # x = n.arange(0, xmax + dx, dx)
@@ -261,7 +261,7 @@ class truncrayleigh_gen(rv_continuous):
         cdf = n.where((x < xmax), cdf, 1.0)
         return cdf
 
-    def _ppf(self, q, sigma, xmax):
+    def ppf(self, q, sigma, xmax):
         A = 1 - n.exp(-xmax**2/(2*sigma**2))
         ppf = n.sqrt(-2*sigma**2*n.log(1-(q*A)))
         return ppf
