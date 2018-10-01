@@ -41,9 +41,13 @@ class uniform_gen(rv_continuous):
     def _cdf(self, x, xmin, xmax):
         return stats.uniform.cdf(x, loc=xmin, scale=xmax - xmin)
 
-    def _ppf(self, q, xmin, xmax):
-        return xmin + (xmax - xmin)*q
+    def ppf(self, q, xmin, xmax):
+        return ppf_uniform(q, xmin, xmax)
+        #return xmin + (xmax - xmin)*q
         #return stats.uniform.ppf(q, loc=xmin, scale=xmax - xmin)
+
+def ppf_uniform(q, xmin, xmax):
+    return xmin + (xmax - xmin)*q
 
 # For backwards compatibility
 class uniform(uniform_gen):
@@ -136,9 +140,13 @@ class uniformfreq_gen(rv_continuous):
         cdf = n.where(x < xmax, cdf, 1.0)
         return cdf
 
-    def _ppf(self, q, x0, xmax):
-        return x0 / (1 - q*(xmax-x0)/xmax)
-    
+    def ppf(self, q, x0, xmax):
+        return ppf_uniformfreq(q, x0, xmax)
+        #return x0 / (1 - q*(xmax-x0)/xmax)
+
+def ppf_uniformfreq(q, x0, xmax):
+    return x0 / (1 - q*(xmax-x0)/xmax)
+
 class binorm_gen(rv_continuous):
 
     def _argcheck(self, mu1, sigma1, mu2, sigma2, A):

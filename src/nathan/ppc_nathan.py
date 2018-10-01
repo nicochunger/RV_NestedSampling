@@ -172,9 +172,13 @@ filename = f'results/results_{data_files[datafile-1]}_model{model}.txt'
 
 try:
     # Append results to file
+    print('\nEstoy agregando la info nueva')
     f = pd.read_csv(filename, sep='\t')
     f = f.append(results)
+    print(f)
     f.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
+    print(filename)
 except:
+    print('No pude agregar estoy guardando nuevo archivo')
     # File does not exist, must create it first
     results.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
