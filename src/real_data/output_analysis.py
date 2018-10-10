@@ -1,6 +1,6 @@
 import pickle
 import matplotlib.pyplot as plt
-#from PyAstronomy.pyasl import foldAt
+# from PyAstronomy.pyasl import foldAt
 import pandas as pd
 import numpy as np
 from pprint import pprint
@@ -80,11 +80,17 @@ ax = np.atleast_1d(ax)  # To support 1 planet models
 
 for i in range(nplanets):
     # Histogram
-    hist, bin_edges, patches = ax[i].hist(
-        post[f'planet{i+1}_period'], label='Posterior', bins='auto', histtype='step', normed=True)
+    period_post = post[f'planet{i+1}_period']
+
+    if i == 3:
+        hist, bin_edges, patches = ax[i].hist(
+            period_post[np.where((period_post < 133.) & (period_post > 129.))], label='Posterior', bins='auto', histtype='step', normed=True)
+    else:
+        hist, bin_edges, patches = ax[i].hist(
+            period_post[np.where(period_post < 200.)], label='Posterior', bins='auto', histtype='step', normed=True)
 
     # Time series of posterior
-    # ax[i].plot(post[f'planet{i+1}_period'], '.')
+    # ax[i].plot(period_post, '.')
 
     ax[i].set_title(
         f"Planet {names[i]}. P = {medians[f'planet{i+1}_period'][0]:5.2f}")
@@ -99,8 +105,8 @@ for i in range(nplanets):
               [0], medians[f'planet{i+1}_period'][1]]
         coeff, var_matrix = curve_fit(
             gauss, bin_centres, hist, p0=p0)  # Fit data
-        x = np.linspace(min(post[f'planet{i+1}_period']),
-                        max(post[f'planet{i+1}_period']), 2000)
+        x = np.linspace(min(period_post),
+                        max(period_post), 2000)
         hist_fit = gauss(x, *coeff)
         ax[i].plot(x, hist_fit, 'r-', label='Gaussian fit')
 

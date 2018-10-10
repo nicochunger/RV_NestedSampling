@@ -33,7 +33,7 @@ for run in runs:
 nplanets = int(prev_run.split('_')[1][0])
 
 # Assign modelpath
-modelpath = 'configfiles/hd40307_model.py'
+modelpath = 'configfiles/hd40307_model_vizier_cluster.py'
 
 # Generate dictionaries
 parnames, datadict, priordict, fixedpardict = config.read_config(
@@ -138,11 +138,11 @@ def format_string(n):
 harps = [
     31334.41254,  # Offset
     1.70696,  # Jitter
-    1.4646,  # Slope
-    0.03492,  # Linear Drift
-    0.00193,  # Quadratic Drift
-    -0.00124,  # Cubic Drift
-    14.29913,  # Drift scaling factor
+    5.24698,  # Slope
+    0.03765,  # Linear Drift
+    0.00484,  # Quadratic Drift
+    -0.00161,  # Cubic Drift
+    22.2,  # Drift scaling factor
 ]
 
 planet1 = [
@@ -213,10 +213,10 @@ with open(dirname, 'r') as resume_file:
                 resume[i+3] = new_live + '\n'
             else:
                 print('\nPrevioud point:')
-                print(resume[i+3])
+                print(resume[i+2])
                 resume[i+2] = new_live + '\n'
                 print('\nNew point:')
-                print(resume[i+3])
+                print(resume[i+2])
             break
 
 # Write edits

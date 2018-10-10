@@ -60,7 +60,6 @@ if args_params.resume:
     dates = []
     for run in runs:
         dates.append(run[-9:])
-    dates.remove('dump')
     dates.sort()
     for run in runs:
         if dates[-1] in run:
