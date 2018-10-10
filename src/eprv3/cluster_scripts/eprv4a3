@@ -1,0 +1,12 @@
+#!/bin/bash
+#SBATCH -o /scratch/nunger/eprv.out -e /scratch/nunger/eprv.err
+# Extremely Presice Evidence Challenge
+# Dataset 3. All planet models.
+source ~/.bashrc
+module add spack
+module add gcc
+module add python/3.6.5
+for iter in {1..3}
+do
+    python ../ppc_eprv3_cluster.py -n 3 -dfile 4
+done

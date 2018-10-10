@@ -2,11 +2,6 @@
 # -*- coding: utf-8 -*-
 # file: ppc_eprv3.py
 
-# Add path of config files
-import sys
-path = '/home/nunger/tesis/codigo/src/eprv3/'
-sys.path.append(path)
-
 # Dependencies
 # Standard libraries
 import time
@@ -21,16 +16,11 @@ import pickle
 
 # Local libraries
 from model_eprv3_kepler import lnlike, lnprior, preprocess
-import config
+import config_cluster
 
 # PolyChord imports
 import PyPolyChord as PPC
 from PyPolyChord.settings import PolyChordSettings
-
-# Remove stack size limit
-import resource
-resource.setrlimit(resource.RLIMIT_STACK,
-                   (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
 
 # Read arguments
 parser = argparse.ArgumentParser()
@@ -55,13 +45,16 @@ args_params = parser.parse_args()
 
 datafile = args_params.dfile  # Data set to analyze
 assert datafile in range(
-    1, 7), "Incorrect datafile. Has to an integer from 1 to 6."
+    1, 7), "Incorrect datafile. Has to be an integer from 1 to 6."
 
 # Generate dictionaries
 nplanets = args_params.n  # Number of Planets in the model
-modelpath = 'eprv3rv01_model.py'
-parnames, datadict, priordict, fixedpardict = config.read_config(
-    path + modelpath, nplanets, args_params.dfile, args_params.narrow)
+
+filepath = os.path.dirname(os.path.abspath(__file__))
+modelpath = os.path.join(filepath, 'eprv3rv01_model.py')
+
+parnames, datadict, priordict, fixedpardict = config_cluster.read_config(
+    modelpath, nplanets, args_params.dfile, args_params.narrow)
 covdict = preprocess(datadict)[0]  # Covariance dictionary
 
 nDims = 2 + (nplanets * 5)  # Number of parameters to fit
@@ -87,7 +80,7 @@ def prior(hypercube):
     return theta
 
 
-dirname = os.path.dirname(os.path.abspath(__file__))
+dirname = '/scratch/nunger/eprv3'
 timecode = time.strftime("%m%d_%H%M")
 folder_path = f'000{datafile}_{nplanets}a_' + timecode
 if args_params.narrow:
@@ -99,7 +92,7 @@ settings.do_clustering = not args_params.noclust
 settings.nlive = nDims * args_params.nlive
 settings.num_repeats = nDims * args_params.nrep
 
-settings.base_dir = 'chains/'
+settings.base_dir = dirname+'/chains/'
 if args_params.save:
     # Save all the files from this run
     settings.base_dir = dirname+'/saved_runs/'+folder_path
@@ -108,13 +101,6 @@ settings.file_root = 'eprv3'
 settings.read_resume = False
 settings.write_resume = False
 settings.precision_criterion = args_params.prec
-
-# Save Parameter names list
-try:
-    pickle.dump(parnames, open(settings.base_dir+'/parnames.p', 'wb'))
-except:
-    os.makedirs(settings.base_dir)
-    pickle.dump(parnames, open(settings.base_dir+'/parnames.p', 'wb'))
 
 # Initialize start time to measure run time
 start = time.time()
@@ -161,9 +147,11 @@ for par in parnames:
 results = results[order]
 
 # Name of data file
-filename = f'results/000{datafile}/results000{datafile}_{nplanets}a_pd.txt'
+filename = dirname + \
+    f'/results/000{datafile}/results000{datafile}_{nplanets}a.txt'
 if args_params.narrow:
-    filename = f'results/000{datafile}/results000{datafile}_{nplanets}b_pd.txt'
+    filename = dirname + \
+        f'/results/000{datafile}/results000{datafile}_{nplanets}b.txt'
 
 try:
     # Append results to file
@@ -173,16 +161,3 @@ try:
 except:
     # File does not exist, must create it first
     results.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
-
-
-# # Plotting
-# if nDims < 8:
-#     try:
-#         import getdist.plots
-#         import matplotlib.pyplot as plt
-#         posterior = output.posterior
-#         g = getdist.plots.getSubplotPlotter()
-#         g.triangle_plot(posterior, filled=True)
-#         plt.show()
-#     except ImportError:
-#         print("Install matplotlib and getdist for plotting examples")
