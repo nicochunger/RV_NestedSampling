@@ -4,14 +4,17 @@ import pandas as pd
 from pprint import pprint
 import priors
 import copy
+import subprocess
 
 
-def read_config(configfile, dfile):
+def read_config(configfile, data_path, dfile):
     """
     Initialises a sampler object using parameters in config.
 
     :param string config: string indicating path to configuration file.
     """
+
+    model = int(configfile[-4])
 
     # Import configuration file as module
     c = imp.load_source('c', configfile)
@@ -19,17 +22,33 @@ def read_config(configfile, dfile):
     # Make copy of all relavant dictionaries
     input_dict, datadict = map(dict.copy, c.configdicts)
 
-    # Create prior instances
-    pprint(input_dict)
-    priordict = priors.prior_constructor(input_dict, {})
-
     # Build list of parameter names
     parnames, _ = get_parnames(input_dict)
 
     # Read data from file(s)
-    data_files = ['a1', 'a2', 'b1', 'b2', 'c1', 'c2']
-    datadict['harps']['datafile'] = f'data/data_{data_files[dfile-1]}_new.txt'
+    # Extract all names of the data files
+    # data_path = '$HOME/codigo/src/nathan/data/cor-gl/'
+    data_files = subprocess.check_output(
+        f'ls {data_path}', shell=True).decode('utf-8').split('\n')
+    data_files.remove('')  # Remove last empty item
+    datadict['harps']['datafile'] = data_path + data_files[dfile-1]
     read_data(datadict)
+
+    # Change prior ranges dependening on dataset
+    alpha = 0.1
+    Tobs = datadict['harps']['data']['Time'].max(
+    ) - datadict['harps']['data']['Time'].min()
+    freq1 = [1./60 + 2./Tobs, 1./60 - 2./Tobs]
+    input_dict['planet1']['period'][2][1] = 1/freq1[0]
+    input_dict['planet1']['period'][2][2] = 1/freq1[1]
+    if model == 2:
+        freq2 = [(1+alpha)/30, (1-alpha)/30]
+        input_dict['planet2']['period'][2][1] = 1/freq2[0]
+        input_dict['planet2']['period'][2][2] = 1/freq2[1]
+
+    # Create prior instances
+    pprint(input_dict)
+    priordict = priors.prior_constructor(input_dict, {})
 
     # Fixed parameters
     fixedpardict = get_fixedparvalues(input_dict)

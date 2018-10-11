@@ -18,11 +18,6 @@ import os
 import PyPolyChord as PPC
 from PyPolyChord.settings import PolyChordSettings
 
-# Remove stack size limit
-import resource
-resource.setrlimit(resource.RLIMIT_STACK,
-                   (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
-
 # Read arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('-model', type=int, default=1,
@@ -47,6 +42,9 @@ parser.add_argument('--resume', action='store_true',
 parser.add_argument('--save', action='store_true',
                     help='If the posterior samples should be saved.')
 
+parser.add_argument('--cluster', action='store_true',
+                    help='If the run is going to be run in the cluster.')
+
 args_params = parser.parse_args()
 
 # Initialize start time to measure run time
@@ -54,15 +52,22 @@ start = time.time()
 
 # Assign modelpath
 model = args_params.model
-modelpath = f'nathan_model{model}.py'
+filepath = os.path.dirname(__file__)
+modelpath = os.path.join(filepath, f'nathan_model{model}.py')
 
 # Generate dictionaries
 datafile = args_params.dfile
-data_files = ['a1', 'a2', 'b1', 'b2', 'c1', 'c2']
+data_path = 'data/cor-gl/'
+if args_params.cluster:
+    data_path = '/home/spectro/nunger/codigo/src/nathan/data/cor-gl/'
+data_files = subprocess.check_output(
+    f'ls {data_path}', shell=True).decode('utf-8').split('\n')
+data_files.remove('')  # Remove last empty item
+print(f'Datafile: {data_files[datafile-1]}')
 assert datafile in range(
-    1, 7), f"Incorrect datafile has to be one of {range(1,7)}"
+    1, 101), f"Incorrect datafile has to be one of {range(1,101)}"
 parnames, datadict, priordict, fixedpardict = config.read_config(
-    modelpath, datafile)
+    modelpath, data_path, datafile)
 
 print('\n Parameter names and order:')
 print(parnames)
@@ -90,7 +95,9 @@ def prior(hypercube):
 
 
 # Filepath for the polychord data and storing the samples
-dirname = 'saved_runs/'
+dirname = ''
+if args_params.cluster:
+    dirname = '/scratch/nunger/nathan/'
 timecode = time.strftime("%m%d_%H%M")
 folder_path = f'nathan_model{model}_' + timecode
 if not args_params.save:
@@ -168,17 +175,18 @@ print('Parameters:')
 print(results)
 
 # Name of data file
-filename = f'results/results_{data_files[datafile-1]}_model{model}.txt'
+filename = dirname + \
+    f'results/results_{data_files[datafile-1][5:-4]}_model{model}.txt'
 
 try:
     # Append results to file
-    print('\nEstoy agregando la info nueva')
+    # print('\nEstoy agregando la info nueva')
     f = pd.read_csv(filename, sep='\t')
     f = f.append(results)
     print(f)
     f.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
     print(filename)
 except:
-    print('No pude agregar estoy guardando nuevo archivo')
+    # print('No pude agregar estoy guardando nuevo archivo')
     # File does not exist, must create it first
     results.to_csv(filename, sep='\t', index=False, float_format='%8.5f')

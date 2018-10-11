@@ -1,0 +1,2 @@
+run_time	logZ	logZerr	log10Z	nlive	prec	harps_offset	harps_jitter	planet1_k1	planet1_period	planet1_omega	planet1_ma0	planet2_k1	planet2_period	planet2_omega	planet2_ma0
+363.13523	-71.15064	 0.37711	-30.90033	250	 0.01000	 0.07117	 0.61554	10.28175	60.02756	 3.55915	 3.30492	 3.15137	27.34418	 2.67918	 2.78777
