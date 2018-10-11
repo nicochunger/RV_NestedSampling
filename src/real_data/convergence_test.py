@@ -7,8 +7,8 @@ import time
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--static', action='store_true',
-                    help='If a static image should be shown instead of the live animation.')
+parser.add_argument('--live', action='store_true',
+                    help='If a live animation should be shown instead of the static image.')
 args_params = parser.parse_args()
 
 root = subprocess.check_output(
@@ -25,7 +25,7 @@ parnames.append('logL')  # Append logL value
 samples = np.loadtxt(root+f'/hd40307_k{nplanets}_phys_live.txt')
 data = pd.DataFrame(samples, columns=parnames)  # Pandas Data Frame
 
-if args_params.static:
+if not args_params.live:
     # Static
     fig, ax = plt.subplots(nplanets, 1, figsize=(6, 18))
     ax = np.atleast_1d(ax)

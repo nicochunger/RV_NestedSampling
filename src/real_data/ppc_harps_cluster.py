@@ -3,7 +3,7 @@
 # file: ppc_eprv3.py
 
 # Dependencies
-from model_rvrd_kepler import lnlike, lnprior, preprocess
+from model_rvrd_kepler_2dsets import lnlike, lnprior, preprocess
 import config
 import numpy as np
 import pandas as pd
@@ -30,10 +30,6 @@ parser.add_argument('-prec', type=float, default=0.01,
                     help='Precision criterion for termination.')
 parser.add_argument('-narrow', type=float, default=0,
                     help='Wether to use the narrow priors for the periods.')
-
-# TODO Change this parameter for other instruments (?)
-# parser.add_argument('-inst', type=str, default=1,
-#                     help='Which dataset to analyze.')
 
 parser.add_argument('--noclust', action='store_false',
                     help='If clustering should be turned off.')
@@ -71,7 +67,7 @@ if args_params.resume:
 # Assign modelpath
 filepath = os.path.dirname(__file__)
 modelpath = os.path.join(
-    filepath, 'configfiles/hd40307_model_vizier_cluster.py')
+    filepath, 'configfiles/hd40307_model_2dsets.py')
 
 # Generate dictionaries
 parnames, datadict, priordict, fixedpardict = config.read_config(
