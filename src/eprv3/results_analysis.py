@@ -23,7 +23,8 @@ for dfile in datafiles:
         try:
             data = pd.read_csv(
                 filepath + f'{dfile}/results{dfile}_{nplanets}a.txt', sep='\t')
-            medians[nplanets] = data.median()['log10Z']
+            # medians[nplanets] = data.median()['log10Z']
+            medians[nplanets] = data.mean()['log10Z']
         except:
             # That configuration hasn't been calculated yet
             # Just leave it at zero
@@ -37,7 +38,8 @@ for dfile in datafiles:
         try:
             data = pd.read_csv(
                 filepath + f'{dfile}/results{dfile}_{nplanets}b.txt', sep='\t')
-            medians[nplanets] = data.median()['log10Z']
+            # medians[nplanets] = data.median()['log10Z']
+            medians[nplanets] = data.mean()['log10Z']
         except:
             # That configuration hasn't been calculated yet
             pass
@@ -51,6 +53,8 @@ print(medianZ_narrow)
 
 # Calculate difference
 dif_broad = medianZ_broad - eprv_broadZ
+dif_broad.rename_axis('Planets', axis=0, inplace=True)
+dif_broad.rename_axis('Dataset', axis=1, inplace=True)
 print('\nDifference of eprv res with my res: Broad Prior')
 print(dif_broad)
 
@@ -60,6 +64,7 @@ plt.vlines(np.arange(0.5, 6, 1), -4, 4, linestyles='dashed')
 plt.plot(range(1, 7), dif_broad.loc[0], '.', label='0 Planet')
 plt.plot(range(1, 7), dif_broad.loc[1], '.', label='1 Planets')
 plt.plot(range(1, 7), dif_broad.loc[2], '.', label='2 Planets')
+plt.plot(range(1, 7), dif_broad.loc[3], '.', label='3 Planets')
 plt.xlim([0.5, 6.5])
 plt.ylim([-5, 5])
 plt.xlabel('Dataset')

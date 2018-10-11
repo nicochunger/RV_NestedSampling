@@ -27,10 +27,10 @@ import config
 import PyPolyChord as PPC
 from PyPolyChord.settings import PolyChordSettings
 
-# Remove stack size limit
-import resource
-resource.setrlimit(resource.RLIMIT_STACK,
-                   (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
+# # Remove stack size limit
+# import resource
+# resource.setrlimit(resource.RLIMIT_STACK,
+#                    (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
 
 # Read arguments
 parser = argparse.ArgumentParser()
