@@ -49,30 +49,29 @@ def read_config(configfile, nplanets, narrow):
 
     # Make copy of all relavant dictionaries and lists
     datadict, fpdict, driftdict, harpsdict = map(dict.copy, c.configdicts)
-    planet_periods = list.copy(c.planet_periods)
-    periods_std = list.copy(c.periods_std)
+    planet_periods = copy.copy(c.planet_periods)
+    periods_std = copy.copy(c.periods_std)
     # Create input_dict in acordance to number of planets in the model
     input_dict = {'harps': harpsdict, 'drift1': driftdict}
     for i in range(1, nplanets+1):
-        input_dict.update({f'planet{i}': copy.deepcopy(fpdict)})
+        input_dict.update({'planet{}'.format(i): copy.deepcopy(fpdict)})
         if narrow:
             # Change the prior range for the planet periods
             if narrow <= 1:
                 # Lower limit
-                input_dict[f'planet{i}']['period'][2][1] = (1-narrow) * \
+                input_dict['planet{}'.format(i)]['period'][2][1] = (1-narrow) * \
                     planet_periods[i-1]
                 # Upper limit
-                input_dict[f'planet{i}']['period'][2][2] = (1+narrow) * \
+                input_dict['planet{}'.format(i)]['period'][2][2] = (1+narrow) * \
                     planet_periods[i-1]
             elif narrow > 1:
                 # Lower limit
-                input_dict[f'planet{i}']['period'][2][1] = planet_periods[i-1] - \
+                input_dict['planet{}'.format(i)]['period'][2][1] = planet_periods[i-1] - \
                     narrow*periods_std[i-1]
                 # Upper limit
-                input_dict[f'planet{i}']['period'][2][2] = planet_periods[i-1] + \
+                input_dict['planet{}'.format(i)]['period'][2][2] = planet_periods[i-1] + \
                     narrow*periods_std[i-1]
 
-    pprint(input_dict)
     # Create prior instances
     priordict = priors.prior_constructor(input_dict, {})
 

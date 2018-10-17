@@ -27,6 +27,7 @@ for run in runs:
 # dates.remove('Cluster')
 dates.sort()
 for run in runs:
+    # Search for the most recent run
     if dates[-1] in run:
         prev_run = run
 # Extract the number of planets analyzed in previous run
@@ -136,45 +137,45 @@ def format_string(n):
 
 
 harps = [
-    31334.41254,  # Offset
-    1.70696,  # Jitter
-    5.24698,  # Slope
-    0.03765,  # Linear Drift
-    0.00484,  # Quadratic Drift
-    -0.00161,  # Cubic Drift
-    22.2,  # Drift scaling factor
+    31334.412,  # Offset
+    1.70696,    # Jitter
+    5.24698,    # Slope
+    0.03765,    # Linear Drift
+    0.00484,    # Quadratic Drift
+    -0.00161,   # Cubic Drift
+    22.2,       # Drift scaling factor
 ]
 
 planet1 = [
-    2.35612,  # K1
-    9.6211,  # Period
-    0.11619,  # Eccentricity
-    3.5423,  # Oemga
-    2.21374  # Mean Anomaly
+    2.35612,    # K1
+    9.6211,     # Period
+    0.11619,    # Eccentricity
+    3.5423,     # Oemga
+    2.21374     # Mean Anomaly
 ]
 
 planet2 = [
-    2.46472,  # K1
-    20.41452,  # Period
-    0.05073,  # Eccentricity
-    1.3456,  # Oemga
-    2.63202  # Mean Anomaly
+    2.46472,    # K1
+    20.41452,   # Period
+    0.05073,    # Eccentricity
+    1.3456,     # Oemga
+    2.63202     # Mean Anomaly
 ]
 
 planet3 = [
-    1.76562,  # K1
-    4.3114,  # Period
-    0.07617,  # Eccentricity
-    2.47893,  # Oemga
-    1.02086  # Mean Anomaly
+    1.76562,    # K1
+    4.3114,     # Period
+    0.07617,    # Eccentricity
+    2.47893,    # Oemga
+    1.02086     # Mean Anomaly
 ]
 
 planet4 = [
-    0.79496,  # K1
-    51.66486,  # Period
-    0.09336,  # Eccentricity
-    2.15823,  # Oemga
-    2.37245  # Mean Anomaly
+    0.79496,    # K1
+    51.66486,   # Period
+    0.09336,    # Eccentricity
+    2.15823,    # Oemga
+    2.37245     # Mean Anomaly
 ]
 
 planets = [planet1, planet2, planet3, planet4]
@@ -198,7 +199,7 @@ new_hypercube = inv_prior(ideal_params)
 new_live = new_live_point(new_hypercube, ideal_params, new_logLs)
 
 
-dirname = chains_path + prev_run + f'/hd40307_k{nplanets}.resume'
+dirname = chains_path + prev_run + '/hd40307_k{}.resume'.format(nplanets)
 
 # Read and edit resume file
 with open(dirname, 'r') as resume_file:

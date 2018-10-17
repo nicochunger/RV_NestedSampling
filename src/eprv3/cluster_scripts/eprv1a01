@@ -1,15 +1,16 @@
 #!/bin/bash
-#SBATCH -o /scratch/nunger/eprv.out -e /scratch/nunger/eprv.err
+#SBATCH -p p4 -n 24 -o /scratch/nunger/eprv.out -e /scratch/nunger/eprv.err
 # Extremely Presice Evidence Challenge
 # Dataset 1. All planet models.
 source ~/.bashrc
 module add spack
 module add gcc
-module add python/3.6.5
-for n in {0..1}
+module add python/2.7.15
+module add openmpi/2.1.0
+for n in {1..1}
 do
-    for iter in {1..49}
+    for iter in {1..1}
     do
-        python ../ppc_eprv3_cluster.py -n $n -dfile 1
+        srun --mpi=pmi2 python ../ppc_eprv3_cluster.py -n $n -dfile 1
     done
 done

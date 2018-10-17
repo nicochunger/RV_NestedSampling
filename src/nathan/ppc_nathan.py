@@ -53,7 +53,7 @@ start = time.time()
 # Assign modelpath
 model = args_params.model
 filepath = os.path.dirname(__file__)
-modelpath = os.path.join(filepath, f'nathan_model{model}.py')
+modelpath = os.path.join(filepath, 'nathan_model{}.py'.format(model))
 
 # Generate dictionaries
 datafile = args_params.dfile
@@ -61,11 +61,11 @@ data_path = 'data/cor-gl/'
 if args_params.cluster:
     data_path = '/home/spectro/nunger/codigo/src/nathan/data/cor-gl/'
 data_files = subprocess.check_output(
-    f'ls {data_path}', shell=True).decode('utf-8').split('\n')
+    'ls {}'.format(data_path), shell=True).decode('utf-8').split('\n')
 data_files.remove('')  # Remove last empty item
-print(f'Datafile: {data_files[datafile-1]}')
+print('Datafile: {}'.format(data_files[datafile-1]))
 assert datafile in range(
-    1, 101), f"Incorrect datafile has to be one of {range(1,101)}"
+    1, 101), "Incorrect datafile has to be one of {}".format(range(1, 101))
 parnames, datadict, priordict, fixedpardict = config.read_config(
     modelpath, data_path, datafile)
 
@@ -99,7 +99,7 @@ dirname = ''
 if args_params.cluster:
     dirname = '/scratch/nunger/nathan/'
 timecode = time.strftime("%m%d_%H%M")
-folder_path = f'nathan_model{model}_' + timecode
+folder_path = 'nathan_model{}_'.format(model) + timecode
 if not args_params.save:
     # Save the samples in a dump folder if the data shouldn't be saved
     # This overwrites any data saved before of the same model
@@ -110,7 +110,7 @@ settings = PolyChordSettings(nDims, nDerived, )
 settings.do_clustering = args_params.noclust
 settings.nlive = nDims * args_params.nlive
 settings.base_dir = dirname+folder_path
-settings.file_root = f'nathan_model{model}'
+settings.file_root = 'nathan_model{}'.format(model)
 settings.num_repeats = nDims * args_params.nrep
 settings.precision_criterion = args_params.prec
 settings.read_resume = False
@@ -142,8 +142,8 @@ output.make_paramnames_files(paramnames)
 
 end = time.time()  # End time
 Dt = end - start
-print(f'\nTotal run time was: {datetime.timedelta(seconds=int(Dt))}')
-print(f'\nlog10(Z) = {output.logZ*0.43429} \n')  # Log10 of the evidence
+print('\nTotal run time was: {}'.format(datetime.timedelta(seconds=int(Dt))))
+print('\nlog10(Z) = {} \n'.format(output.logZ*0.43429))  # Log10 of the evidence
 
 # Save output data as a pickle file
 pickle_file = settings.base_dir + '/output.p'
@@ -158,16 +158,16 @@ results['logZerr'] = output.logZerr
 results['log10Z'] = output.logZ * np.log10(np.e)  # Total evidence in log_10
 results['nlive'] = settings.nlive  # Number of live points
 results['prec'] = settings.precision_criterion  # Precision crtierion
-medians = np.median(output.posterior.samples, axis=0)
-for i in range(nDims):
-    results[parnames[i]] = medians[i]
+# medians = np.median(output.posterior.samples, axis=0)
+# for i in range(nDims):
+#     results[parnames[i]] = medians[i]
 
 # Convert to pandas DataFrame
 results = pd.DataFrame(results, index=[0])
 # Order the parameters
 order = ['run_time', 'logZ', 'logZerr', 'log10Z', 'nlive', 'prec']
-for par in parnames:
-    order.append(par)
+# for par in parnames:
+#     order.append(par)
 results = results[order]
 
 print('\n')
@@ -176,17 +176,19 @@ print(results)
 
 # Name of data file
 filename = dirname + \
-    f'results/results_{data_files[datafile-1][5:-4]}_model{model}.txt'
+    'results2/results_{}_model{}.txt'.format(
+        data_files[datafile-1][5:-4], model)
 
 try:
     # Append results to file
     # print('\nEstoy agregando la info nueva')
     f = pd.read_csv(filename, sep='\t')
-    f = f.append(results)
-    print(f)
-    f.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
-    print(filename)
+    print('Pude leer archivo')
+    if float("{:8.5f}".format(results['logZ'].values[0])) not in f['logZ'].values:
+        f = f.append(results)
+        f.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
 except:
     # print('No pude agregar estoy guardando nuevo archivo')
     # File does not exist, must create it first
+    print('Cree archivo nuevo')
     results.to_csv(filename, sep='\t', index=False, float_format='%8.5f')

@@ -27,18 +27,19 @@ def read_config(configfile, nplanets, dfile, narrow):
 
     # Write correct data file path
     datapath = os.path.join(os.getenv('HOME'), 'codigo/data')
-    datadict['eprv']['datafile'] = datapath + f'/rvs_000{dfile}.txt'
+    datadict['eprv']['datafile'] = datapath + '/rvs_000{}.txt'.format(dfile)
 
     # Create input_dict in acordance to number of planets in the model
     input_dict = {'eprv': eprvdict, 'drift1': driftdict}
     for i in range(1, nplanets+1):
-        input_dict.update({f'planet{i}': copy.deepcopy(fpdict)})
+        input_dict.update({'planet{}'.format(i): copy.deepcopy(fpdict)})
         # If narrow is True change period priors to the narrow values
         if narrow:
-            input_dict[f'planet{i}']['period'][2][1] = narrow_priors[dfile][i-1][0]
-            input_dict[f'planet{i}']['period'][2][2] = narrow_priors[dfile][i-1][1]
+            input_dict['planet{}'.format(
+                i)]['period'][2][1] = narrow_priors[dfile][i-1][0]
+            input_dict['planet{}'.format(
+                i)]['period'][2][2] = narrow_priors[dfile][i-1][1]
 
-    pprint(input_dict)
     # Create prior instances
     priordict = priors.prior_constructor(input_dict, {})
 

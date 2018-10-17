@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 # from PyAstronomy.pyasl import foldAt
 import pandas as pd
 import numpy as np
+import numpy.ma as ma
 from pprint import pprint
 from scipy.optimize import curve_fit
 import argparse
@@ -44,83 +45,91 @@ medians = dict(zip(paramnames, zip(np.round(np.median(
 names = ['c', 'd', 'b', 'f', 'g']
 pprint(medians)
 
-# # --------------- POSTERIORS -----------------------------
-# # Count the number of planets in model
-# nplanets = 0
-# for i in range(10):
-#     if f'planet{i}_period' in paramnames:
-#         nplanets += 1
+# --------------- POSTERIORS -----------------------------
+# Count the number of planets in model
+nplanets = 0
+for i in range(10):
+    if f'planet{i}_period' in paramnames:
+        nplanets += 1
 
-# # Construct dictionary with posterior for each parameter
-# post = {}
-# for i in range(len(paramnames)):
-#     post.update({paramnames[i]: samples[:, i]})
-
-
-# def gauss(x, *p):
-#     # Gaussian model
-#     A, mu, sigma = p
-#     return A*np.exp(-(x-mu)**2/(2.*sigma**2))
-
-# # fig2, ax2 = plt.subplots(4, 1)
-# # ax2[0].hist(post['drift1_lin']*1e4,
-# #             bins='auto', histtype='step', normed=True)
-# # ax2[1].hist(post['drift1_qua']*1e4,
-# #             bins='auto', histtype='step', normed=True)
-# # ax2[2].hist(post['drift1_cub']*1e4,
-# #             bins='auto', histtype='step', normed=True)
-# # ax2[3].hist(post['drift1_unitconstant'],
-# #             bins='auto', histtype='step', normed=True)
-# # plt.show()
+# Construct dictionary with posterior for each parameter
+post = {}
+for i in range(len(paramnames)):
+    post.update({paramnames[i]: samples[:, i]})
 
 
-# # Plot posterior for the period of each planet
-# fig, ax = plt.subplots(nplanets, 1)
-# ax = np.atleast_1d(ax)  # To support 1 planet models
+def gauss(x, *p):
+    # Gaussian model
+    A, mu, sigma = p
+    return A*np.exp(-(x-mu)**2/(2.*sigma**2))
 
-# for i in range(nplanets):
-#     # Histogram
-#     period_post = post[f'planet{i+1}_period']
-
-#     hist, bin_edges, patches = ax[i].hist(
-#         period_post, label='Posterior', bins='auto', histtype='step', normed=True)
-
-#     # Time series of posterior
-#     # ax[i].plot(period_post, '.')
-
-#     ax[i].set_title(
-#         f"Planet {names[i]}. P = {medians[f'planet{i+1}_period'][0]:5.2f}")
-#     ax[i].set_xlabel('Period [d]')
-#     ax[i].set_ylabel('PDF')
-
-#     if args_params.fit:
-#         # Gaussian fit
-#         # Calculate bin centers
-#         bin_centres = (bin_edges[:-1] + bin_edges[1:]) / 2
-#         p0 = [10, medians[f'planet{i+1}_period']
-#               [0], medians[f'planet{i+1}_period'][1]]
-#         coeff, var_matrix = curve_fit(
-#             gauss, bin_centres, hist, p0=p0)  # Fit data
-#         x = np.linspace(min(period_post),
-#                         max(period_post), 2000)
-#         hist_fit = gauss(x, *coeff)
-#         ax[i].plot(x, hist_fit, 'r-', label='Gaussian fit')
-
-#         # Information box of fit parameters
-#         textstr = '\n'.join((
-#             'Fitted values:',
-#             r'$A=%.5f$' % (coeff[0], ),
-#             r'$\mu=%.5f$' % (coeff[1], ),
-#             r'$\sigma=%.5f$' % (abs(coeff[2]), )))
-#         # these are matplotlib.patch.Patch properties
-#         props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-#         # place a text box in upper left in axes coords
-#         ax[i].text(0.05, 0.95, textstr, transform=ax[i].transAxes,
-#                    fontsize=11, verticalalignment='top', bbox=props)
-#         ax[i].legend()
-# plt.tight_layout()
+# fig2, ax2 = plt.subplots(4, 1)
+# ax2[0].hist(post['drift1_lin']*1e4,
+#             bins='auto', histtype='step', normed=True)
+# ax2[1].hist(post['drift1_qua']*1e4,
+#             bins='auto', histtype='step', normed=True)
+# ax2[2].hist(post['drift1_cub']*1e4,
+#             bins='auto', histtype='step', normed=True)
+# ax2[3].hist(post['drift1_unitconstant'],
+#             bins='auto', histtype='step', normed=True)
 # plt.show()
-# # -------------------------------------------------------
+
+
+# Plot posterior for the period of each planet
+fig, ax = plt.subplots(nplanets, 1)
+ax = np.atleast_1d(ax)  # To support 1 planet models
+
+for i in range(nplanets):
+    # Mask array to filter values greater than 670
+    period_post = post[f'planet{i+1}_period']
+    period_post = period_post[np.where(
+        (period_post >= 1) & (period_post <= 140))]
+    # period_post = ma.masked_inside(post[f'planet{i+1}_period'], 1, 670)
+    # print(len(period_post))
+
+    # Histogram
+    # hist, bin_edges, patches = ax[i].hist(
+    #     period_post, label='Posterior', bins='fd', histtype='step', normed=True)
+
+    hist, bin_edges, patches = ax[i].hist(
+        period_post, label='Posterior', bins=8000, histtype='step', normed=True)
+
+    # Time series of posterior
+    # ax[i].plot(period_post, '.')
+
+    ax[i].set_title(
+        f"Planet {names[i]}. P = {medians[f'planet{i+1}_period'][0]:5.2f}")
+    ax[i].set_xlabel('Period [d]')
+    ax[i].set_ylabel('PDF')
+
+    if args_params.fit:
+        # Gaussian fit
+        # Calculate bin centers
+        bin_centres = (bin_edges[:-1] + bin_edges[1:]) / 2
+        p0 = [10, medians[f'planet{i+1}_period']
+              [0], medians[f'planet{i+1}_period'][1]]
+        coeff, var_matrix = curve_fit(
+            gauss, bin_centres, hist, p0=p0)  # Fit data
+        x = np.linspace(min(period_post),
+                        max(period_post), 2000)
+        hist_fit = gauss(x, *coeff)
+        ax[i].plot(x, hist_fit, 'r-', label='Gaussian fit')
+
+        # Information box of fit parameters
+        textstr = '\n'.join((
+            'Fitted values:',
+            r'$A=%.5f$' % (coeff[0], ),
+            r'$\mu=%.5f$' % (coeff[1], ),
+            r'$\sigma=%.5f$' % (abs(coeff[2]), )))
+        # these are matplotlib.patch.Patch properties
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        # place a text box in upper left in axes coords
+        ax[i].text(0.05, 0.95, textstr, transform=ax[i].transAxes,
+                   fontsize=11, verticalalignment='top', bbox=props)
+        ax[i].legend()
+plt.tight_layout()
+plt.show()
+# -------------------------------------------------------
 
 # # ---------- PHASE FOLDING -----------------
 # phases = np.zeros((len(t), nplanets))

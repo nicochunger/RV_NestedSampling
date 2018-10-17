@@ -82,7 +82,7 @@ def modelk(pardict, time, planet='1'):
 
     ###
     # SESIN SECOS ML0
-    if f'planet{planet}_secos' in pardict:
+    if 'planet{}_secos'.format(planet) in pardict:
         secos = pardict['planet{}_secos'.format(planet)]
         sesin = pardict['planet{}_sesin'.format(planet)]
         ecc = secos**2 + sesin**2

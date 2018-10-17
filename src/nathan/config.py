@@ -29,7 +29,7 @@ def read_config(configfile, data_path, dfile):
     # Extract all names of the data files
     # data_path = '$HOME/codigo/src/nathan/data/cor-gl/'
     data_files = subprocess.check_output(
-        f'ls {data_path}', shell=True).decode('utf-8').split('\n')
+        'ls {}'.format(data_path), shell=True).decode('utf-8').split('\n')
     data_files.remove('')  # Remove last empty item
     datadict['harps']['datafile'] = data_path + data_files[dfile-1]
     read_data(datadict)

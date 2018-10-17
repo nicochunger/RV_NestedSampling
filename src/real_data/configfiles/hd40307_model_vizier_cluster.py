@@ -4,7 +4,12 @@
 import os
 from numpy import pi
 
-datapath = os.path.join(os.getenv('HOME'), 'codigo/data/')
+home = os.getenv('HOME')
+if 'spectro' in home:
+    datapath = os.path.join(home, 'codigo/data/')
+else:
+    datapath = os.path.join(home, 'tesis/codigo/data/')
+
 
 # -------------------
 # DATA

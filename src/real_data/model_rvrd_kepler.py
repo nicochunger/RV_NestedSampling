@@ -77,7 +77,7 @@ def modelk(pardict, time, planet='1'):
 
     ###
     # SESIN SECOS ML0
-    if f'planet{planet}_secos' in pardict:
+    if 'planet{}_secos'.format(planet) in pardict:
         secos = pardict['planet{}_secos'.format(planet)]
         sesin = pardict['planet{}_sesin'.format(planet)]
         ecc = secos**2 + sesin**2
@@ -130,8 +130,8 @@ def model(pardict, time):
     # Find out number of planets
     planets = []
     for i in range(1, 10):
-        if (f'planet{i}_period' in pardict) or \
-           (f'planet{i}_logperiod' in pardict):
+        if ('planet{}_period'.format(i) in pardict) or \
+           ('planet{}_logperiod'.format(i) in pardict):
             planets.append(i)
 
     rv_planet = np.zeros((len(planets) + 1, len(time)))
@@ -166,8 +166,8 @@ def lnlike(param, parnames, fixedpardict, data, covdict, **kwargs):
         #cov = covdict[instrument].copy()
         #cov += np.diag(ey**2 + jitter**2)
 
-        jitter = pardict[f'{instrument}_jitter']
-        slope = pardict[f'{instrument}_slope']
+        jitter = pardict['{}_jitter'.format(instrument)]
+        slope = pardict['{}_slope'.format(instrument)]
         rhk_noise = jitter + slope * rhk5
         noise = ey**2 + rhk_noise**2
 
@@ -179,7 +179,7 @@ def lnlike(param, parnames, fixedpardict, data, covdict, **kwargs):
             return -np.inf
 
         # Compute likelihood
-        res = y - pardict[f'{instrument}_offset'] - rvm
+        res = y - pardict['{}_offset'.format(instrument)] - rvm
         # lnlike[i] = likelihood.lnlike_gaussian(res, cov)
         lnlike[i] = likelihood.lnlike_gregory(res, noise)
 

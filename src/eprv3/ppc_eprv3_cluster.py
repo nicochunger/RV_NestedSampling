@@ -82,9 +82,9 @@ def prior(hypercube):
 
 dirname = '/scratch/nunger/eprv3'
 timecode = time.strftime("%m%d_%H%M")
-folder_path = f'000{datafile}_{nplanets}a_' + timecode
+folder_path = '000{}_{}a_'.format(datafile, nplanets) + timecode
 if args_params.narrow:
-    folder_path = f'000{datafile}_{nplanets}b_' + timecode
+    folder_path = '000{}_{}b_'.format(datafile, nplanets) + timecode
 
 # Define PolyChord settings
 settings = PolyChordSettings(nDims, nDerived, )
@@ -108,18 +108,19 @@ start = time.time()
 # Run PolyChord
 output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
 
+end = time.time()  # End time
+Dt = end - start
+print('\nTotal run time was: {}'.format(datetime.timedelta(seconds=int(Dt))))
+print('\nlog10(Z) = {} \n'.format(output.logZ*0.43429))  # Log10 of the evidence
+
 # Parameter names
 latexnames = [r'\sigma_J', r'C']
 for j in range(nplanets):
     latexnames.extend(
-        [fr'K_{j}', fr'P_{j}', fr'e_{j}', fr'\omega_{j}', fr'M_{j}'])
+        [r'K_{}'.format(j), r'P_{}'.format(j), r'e_{}'.format(j), r'\omega_{}'.format(j), r'M_{}'.format(j)])
 paramnames = [(x, latexnames[i]) for i, x in enumerate(parnames)]
 output.make_paramnames_files(paramnames)
 
-end = time.time()  # End time
-Dt = end - start
-print(f'\nTotal run time was: {datetime.timedelta(seconds=int(Dt))}')
-print(f'\nlog10(Z) = {output.logZ*0.43429} \n')  # Log10 of the evidence
 
 # Save output as a pickle file
 if args_params.save:
@@ -148,10 +149,11 @@ results = results[order]
 
 # Name of data file
 filename = dirname + \
-    f'/results/000{datafile}/results000{datafile}_{nplanets}a.txt'
+    '/results/000{}/results000{}_{}a.txt'.format(datafile, datafile, nplanets)
 if args_params.narrow:
     filename = dirname + \
-        f'/results/000{datafile}/results000{datafile}_{nplanets}b.txt'
+        '/results/000{}/results000{}_{}b.txt'.format(
+            datafile, datafile, nplanets)
 
 try:
     # Append results to file

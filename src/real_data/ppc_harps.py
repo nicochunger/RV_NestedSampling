@@ -23,8 +23,9 @@ import resource
 resource.setrlimit(resource.RLIMIT_STACK,
                    (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
 
-# Read arguments
+# --------  Read arguments  --------------
 parser = argparse.ArgumentParser()
+# Scale arguments
 parser.add_argument('-n', type=int, default=1,
                     help='Number of planets in model.')
 parser.add_argument('-nlive', type=int, default=25,
@@ -36,10 +37,7 @@ parser.add_argument('-prec', type=float, default=0.01,
 parser.add_argument('-narrow', type=float, default=0,
                     help='Wether to use the narrow priors for the periods.')
 
-# TODO Change this parameter for other instruments (?)
-# parser.add_argument('-inst', type=str, default=1,
-#                     help='Which dataset to analyze.')
-
+# Boolean arguments
 parser.add_argument('--noclust', action='store_false',
                     help='If clustering should be turned off.')
 
@@ -50,6 +48,7 @@ parser.add_argument('--save', action='store_true',
                     help='If the posterior samples should be saved.')
 
 args_params = parser.parse_args()
+# -----------------------------------------
 
 # Initialize start time to measure run time
 start = time.time()
