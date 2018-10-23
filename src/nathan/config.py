@@ -47,7 +47,6 @@ def read_config(configfile, data_path, dfile):
         input_dict['planet2']['period'][2][2] = 1/freq2[1]
 
     # Create prior instances
-    pprint(input_dict)
     priordict = priors.prior_constructor(input_dict, {})
 
     # Fixed parameters

@@ -13,6 +13,10 @@ import os
 import numpy as np
 import pandas as pd
 import pickle
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
 
 # Local libraries
 from model_eprv3_kepler import lnlike, lnprior, preprocess
@@ -110,8 +114,11 @@ output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
 
 end = time.time()  # End time
 Dt = end - start
-print('\nTotal run time was: {}'.format(datetime.timedelta(seconds=int(Dt))))
-print('\nlog10(Z) = {} \n'.format(output.logZ*0.43429))  # Log10 of the evidence
+if rank == 0:
+    print('\nTotal run time was: {}'.format(
+        datetime.timedelta(seconds=int(Dt))))
+    # Log10 of the evidence
+    print('\nlog10(Z) = {} \n'.format(output.logZ*0.43429))
 
 # Parameter names
 latexnames = [r'\sigma_J', r'C']
@@ -135,31 +142,33 @@ results['logZerr'] = output.logZerr
 results['log10Z'] = output.logZ * np.log10(np.e)  # Total evidence in log_10
 results['nlive'] = settings.nlive  # Number of live points
 results['prec'] = settings.precision_criterion  # Precision crtierion
-medians = np.median(output.posterior.samples, axis=0)
-for i in range(nDims):
-    results[parnames[i]] = medians[i]
+# medians = np.median(output.posterior.samples, axis=0)
+# for i in range(nDims):
+#     results[parnames[i]] = medians[i]
 
 # Convert to pandas DataFrame
 results = pd.DataFrame(results, index=[0])
 # Order the parameters
 order = ['run_time', 'logZ', 'logZerr', 'log10Z', 'nlive', 'prec']
-for par in parnames:
-    order.append(par)
+# for par in parnames:
+#     order.append(par)
 results = results[order]
 
 # Name of data file
 filename = dirname + \
-    '/results/000{}/results000{}_{}a.txt'.format(datafile, datafile, nplanets)
+    '/results/000{}/results000{}_{}a2.txt'.format(datafile, datafile, nplanets)
 if args_params.narrow:
     filename = dirname + \
-        '/results/000{}/results000{}_{}b.txt'.format(
+        '/results/000{}/results000{}_{}b2.txt'.format(
             datafile, datafile, nplanets)
 
-try:
-    # Append results to file
-    f = pd.read_csv(filename, sep='\t')
-    f = f.append(results)
-    f.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
-except:
-    # File does not exist, must create it first
-    results.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
+if rank == 0:
+    try:
+        # Append results to file
+        f = pd.read_csv(filename, sep='\t')
+        f = f.append(results)
+        f = f[order]
+        f.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
+    except:
+        # File does not exist, must create it first
+        results.to_csv(filename, sep='\t', index=False, float_format='%8.5f')

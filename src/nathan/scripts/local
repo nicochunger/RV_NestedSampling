@@ -1,0 +1,12 @@
+#!/bin/bash
+# One Eccentric vs Two circular
+for dfile in {1..1}
+do
+    for model in {1..1}
+    do
+        for iter in {1..10}
+        do
+            mpirun python ../ppc_nathan.py -dfile $dfile -model $model -nlive 3
+        done
+    done
+done

@@ -13,6 +13,12 @@ import os
 import numpy as np
 import pandas as pd
 import pickle
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
+
+# print("I'm rank {} of {}".format(rank, size))
 
 # Own modules
 from model_rvrd_kepler import lnlike, preprocess
@@ -82,8 +88,9 @@ modelpath = os.path.join(
 parnames, datadict, priordict, fixedpardict = config.read_config(
     modelpath, nplanets, args_params.narrow)
 
-print('\n Parameter names and order:')
-print(parnames)
+if rank == 0:
+    print('\n Parameter names and order:')
+    print(parnames)
 
 covdict = preprocess(datadict)[0]  # Covariance dictionary
 
@@ -123,7 +130,7 @@ if not args_params.save:
 settings = PolyChordSettings(nDims, nDerived, )
 settings.do_clustering = args_params.noclust
 settings.nlive = nDims * args_params.nlive
-settings.base_dir = dirname+folder_path
+settings.base_dir = os.path.join(dirname, folder_path)
 settings.file_root = 'hd40307_k{}'.format(nplanets)  # modelpath[12:-3]
 settings.num_repeats = nDims * args_params.nrep
 settings.precision_criterion = args_params.prec
@@ -134,12 +141,13 @@ if args_params.resume:
     settings.read_resume = args_params.resume
     settings.base_dir = dirname+prev_run
 
-# Save Parameter names list
-try:
-    pickle.dump(parnames, open(settings.base_dir+'/parnames.p', 'wb'))
-except:
-    os.makedirs(settings.base_dir)
-    pickle.dump(parnames, open(settings.base_dir+'/parnames.p', 'wb'))
+if rank == 0:
+    # Save Parameter names list
+    try:
+        pickle.dump(parnames, open(settings.base_dir+'/parnames.p', 'wb'))
+    except:
+        os.makedirs(settings.base_dir)
+        pickle.dump(parnames, open(settings.base_dir+'/parnames.p', 'wb'))
 
 # Run PolyChord
 output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
@@ -156,12 +164,14 @@ output.make_paramnames_files(paramnames)
 
 end = time.time()  # End time
 Dt = end - start
-print('\nTotal run time was: {}'.format(datetime.timedelta(seconds=int(Dt))))
-print('\nlog10(Z) = {} \n'.format(output.logZ*0.43429))  # Log10 of the evidence
+if rank == 0:
+    print('\nTotal run time was: {}'.format(
+        datetime.timedelta(seconds=int(Dt))))
+    # Log10 of the evidence
+    print('\nlog10(Z) = {} \n'.format(output.logZ*0.43429))
 
 # Save output data as a pickle file
 pickle_file = settings.base_dir + '/output.p'
-print(pickle_file)
 pickle.dump(output, open(pickle_file, "wb"))
 
 ########################################
@@ -175,33 +185,34 @@ results['logZerr'] = output.logZerr
 results['log10Z'] = output.logZ * np.log10(np.e)  # Total evidence in log_10
 results['nlive'] = settings.nlive  # Number of live points
 results['prec'] = settings.precision_criterion  # Precision crtierion
-medians = np.median(output.posterior.samples, axis=0)
-for i in range(nDims):
-    results[parnames[i]] = medians[i]
+# medians = np.median(output.posterior.samples, axis=0)
+# for i in range(nDims):
+#     results[parnames[i]] = medians[i]
 
 # Convert to pandas DataFrame
 results = pd.DataFrame(results, index=[0])
 # Order the parameters
 order = ['id', 'run_time', 'logZ', 'logZerr', 'log10Z', 'nlive', 'prec']
-for par in parnames:
-    order.append(par)
+# for par in parnames:
+#     order.append(par)
 results = results[order]
 
-print('\n')
-print('Parameters:')
-print(results)
+if rank == 0:
+    print('\nParameters:')
+    print(results)
 
 # Name of data file
-filename = dirname+'results_{}a.txt'.format(nplanets)
+filename = dirname+'results_{}a2.txt'.format(nplanets)
 if args_params.narrow:
     filename = dirname+'results_{}b.txt'.format(nplanets)
 
-try:
-    # Append results to file
-    f = pd.read_csv(filename, sep='\t')
-    f = f.append(results)
-    f = f[order]
-    f.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
-except:
-    # File does not exist, must create it first
-    results.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
+if rank == 0:
+    try:
+        # Append results to file
+        f = pd.read_csv(filename, sep='\t')
+        f = f.append(results)
+        f = f[order]
+        f.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
+    except:
+        # File does not exist, must create it first
+        results.to_csv(filename, sep='\t', index=False, float_format='%8.5f')

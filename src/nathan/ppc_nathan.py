@@ -14,6 +14,11 @@ import pickle
 import subprocess
 import os
 
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
+
 # PolyChord imports
 import PyPolyChord as PPC
 from PyPolyChord.settings import PolyChordSettings
@@ -57,20 +62,21 @@ modelpath = os.path.join(filepath, 'nathan_model{}.py'.format(model))
 
 # Generate dictionaries
 datafile = args_params.dfile
-data_path = 'data/cor-gl/'
+data_path = os.path.join(filepath, 'data/cor-gl/')
 if args_params.cluster:
     data_path = '/home/spectro/nunger/codigo/src/nathan/data/cor-gl/'
 data_files = subprocess.check_output(
     'ls {}'.format(data_path), shell=True).decode('utf-8').split('\n')
 data_files.remove('')  # Remove last empty item
-print('Datafile: {}'.format(data_files[datafile-1]))
 assert datafile in range(
     1, 101), "Incorrect datafile has to be one of {}".format(range(1, 101))
 parnames, datadict, priordict, fixedpardict = config.read_config(
     modelpath, data_path, datafile)
 
-print('\n Parameter names and order:')
-print(parnames)
+if rank == 0:
+    print('Datafile: {}'.format(data_files[datafile-1]))
+    print('\n Parameter names and order:')
+    print(parnames)
 
 # Number of dimensions is the number of parameters in the model
 nDims = len(parnames)
@@ -95,7 +101,7 @@ def prior(hypercube):
 
 
 # Filepath for the polychord data and storing the samples
-dirname = ''
+dirname = filepath
 if args_params.cluster:
     dirname = '/scratch/nunger/nathan/'
 timecode = time.strftime("%m%d_%H%M")
@@ -109,7 +115,7 @@ if not args_params.save:
 settings = PolyChordSettings(nDims, nDerived, )
 settings.do_clustering = args_params.noclust
 settings.nlive = nDims * args_params.nlive
-settings.base_dir = dirname+folder_path
+settings.base_dir = os.path.join(dirname, folder_path)
 settings.file_root = 'nathan_model{}'.format(model)
 settings.num_repeats = nDims * args_params.nrep
 settings.precision_criterion = args_params.prec
@@ -142,12 +148,14 @@ output.make_paramnames_files(paramnames)
 
 end = time.time()  # End time
 Dt = end - start
-print('\nTotal run time was: {}'.format(datetime.timedelta(seconds=int(Dt))))
-print('\nlog10(Z) = {} \n'.format(output.logZ*0.43429))  # Log10 of the evidence
+if rank == 0:
+    print('\nTotal run time was: {}'.format(
+        datetime.timedelta(seconds=int(Dt))))
+    # Log10 of the evidence
+    print('\nlog10(Z) = {} \n'.format(output.logZ*0.43429))
 
 # Save output data as a pickle file
 pickle_file = settings.base_dir + '/output.p'
-print(pickle_file)
 pickle.dump(output, open(pickle_file, "wb"))
 
 # Save evidence and other relevant data
@@ -170,25 +178,21 @@ order = ['run_time', 'logZ', 'logZerr', 'log10Z', 'nlive', 'prec']
 #     order.append(par)
 results = results[order]
 
-print('\n')
-print('Parameters:')
-print(results)
+if rank == 0:
+    print('\nParameters:')
+    print(results)
 
 # Name of data file
-filename = dirname + \
-    'results2/results_{}_model{}.txt'.format(
-        data_files[datafile-1][5:-4], model)
+filename = os.path.join(dirname, 'results3/results_{}_model{}.txt'.format(
+    data_files[datafile-1][5:-4], model))
 
-try:
-    # Append results to file
-    # print('\nEstoy agregando la info nueva')
-    f = pd.read_csv(filename, sep='\t')
-    print('Pude leer archivo')
-    if float("{:8.5f}".format(results['logZ'].values[0])) not in f['logZ'].values:
+# Only save results if it's the first process
+if rank == 0:
+    try:
+        # Append results to file
+        f = pd.read_csv(filename, sep='\t')
         f = f.append(results)
         f.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
-except:
-    # print('No pude agregar estoy guardando nuevo archivo')
-    # File does not exist, must create it first
-    print('Cree archivo nuevo')
-    results.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
+    except:
+        # File does not exist, must create it first
+        results.to_csv(filename, sep='\t', index=False, float_format='%8.5f')

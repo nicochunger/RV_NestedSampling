@@ -27,7 +27,6 @@ samples = posterior.samples
 paramnames = posterior.getParamNames().list()
 medians = dict(zip(paramnames, zip(np.round(np.median(
     samples, axis=0), 5), np.round(np.std(samples, axis=0), 7))))
-names = ['c', 'd', 'b', 'f', 'g']
 pprint(medians)
 
 # --------------- POSTERIORS -----------------------------
@@ -54,14 +53,22 @@ print(len(p51))
 p131 = np.where((period_post >= 130.6) & (period_post <= 131.5))[0]
 print(len(p131))
 
-medians_51 = dict(zip(paramnames, zip(np.round(np.median(
+parnames51 = [par+'51' for par in paramnames]
+medians_51 = dict(zip(parnames51, zip(np.round(np.median(
     samples[p51, :], axis=0), 5), np.round(np.std(samples[p51, :], axis=0), 7))))
 
-medians_131 = dict(zip(paramnames, zip(np.round(np.median(
+parnames131 = [par+'131' for par in paramnames]
+medians_131 = dict(zip(parnames131, zip(np.round(np.median(
     samples[p131, :], axis=0), 5), np.round(np.std(samples[p131, :], axis=0), 7))))
 
-print('\nValues at 51 days:')
-pprint(medians_51)
+medians2 = {}
+medians2.update(medians_51)
+medians2.update(medians_131)
 
-print('\nValues at 131 days')
-pprint(medians_131)
+pprint(medians2)
+
+# print('\nValues at 51 days:')
+# pprint(medians_51)
+
+# print('\nValues at 131 days')
+# pprint(medians_131)

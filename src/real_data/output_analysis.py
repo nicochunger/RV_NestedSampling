@@ -76,14 +76,14 @@ def gauss(x, *p):
 
 
 # Plot posterior for the period of each planet
-fig, ax = plt.subplots(nplanets, 1)
+fig, ax = plt.subplots(nplanets, 1, figsize=(6, 18))
 ax = np.atleast_1d(ax)  # To support 1 planet models
 
 for i in range(nplanets):
     # Mask array to filter values greater than 670
     period_post = post[f'planet{i+1}_period']
     period_post = period_post[np.where(
-        (period_post >= 1) & (period_post <= 140))]
+        (period_post >= 1) & (period_post <= 670))]
     # period_post = ma.masked_inside(post[f'planet{i+1}_period'], 1, 670)
     # print(len(period_post))
 
@@ -92,13 +92,13 @@ for i in range(nplanets):
     #     period_post, label='Posterior', bins='fd', histtype='step', normed=True)
 
     hist, bin_edges, patches = ax[i].hist(
-        period_post, label='Posterior', bins=8000, histtype='step', normed=True)
+        period_post, label='Posterior', bins=500, histtype='step', normed=True)
 
     # Time series of posterior
     # ax[i].plot(period_post, '.')
 
     ax[i].set_title(
-        f"Planet {names[i]}. P = {medians[f'planet{i+1}_period'][0]:5.2f}")
+        f"Planet {i+1}. P = {medians[f'planet{i+1}_period'][0]:5.2f}")
     ax[i].set_xlabel('Period [d]')
     ax[i].set_ylabel('PDF')
 
