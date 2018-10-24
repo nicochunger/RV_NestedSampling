@@ -156,10 +156,10 @@ results = results[order]
 
 # Name of data file
 filename = dirname + \
-    '/results/000{}/results000{}_{}a2.txt'.format(datafile, datafile, nplanets)
+    '/results/000{}/results000{}_{}a.txt'.format(datafile, datafile, nplanets)
 if args_params.narrow:
     filename = dirname + \
-        '/results/000{}/results000{}_{}b2.txt'.format(
+        '/results/000{}/results000{}_{}b.txt'.format(
             datafile, datafile, nplanets)
 
 if rank == 0:

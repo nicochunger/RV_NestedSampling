@@ -48,11 +48,11 @@ def read_config(configfile, nplanets, narrow):
     c = imp.load_source('c', configfile)
 
     # Make copy of all relavant dictionaries and lists
-    datadict, fpdict, driftdict, harpsdict = map(dict.copy, c.configdicts)
+    datadict, fpdict, input_dict = map(dict.copy, c.configdicts)
     planet_periods = copy.copy(c.planet_periods)
     periods_std = copy.copy(c.periods_std)
     # Create input_dict in acordance to number of planets in the model
-    input_dict = {'harps': harpsdict, 'drift1': driftdict}
+    #input_dict = {'harps': harpsdict, 'drift1': driftdict}
     for i in range(1, nplanets+1):
         input_dict.update({'planet{}'.format(i): copy.deepcopy(fpdict)})
         if narrow:

@@ -15,16 +15,16 @@ parser.add_argument('--fit', action='store_true',
                     help='If posterior should be fit with a gaussian.')
 args_params = parser.parse_args()
 
-datapath = '/home/nunger/tesis/codigo/data/HD40307/'
-data = pd.read_csv(datapath+'HD40307_HARPS03(DRS-3-5)_night_binning.rdb',
-                   sep='\t', comment='#', skiprows=[1, ])
+# datapath = '/home/nunger/tesis/codigo/data/HD40307/'
+# data = pd.read_csv(datapath+'HD40307_HARPS03(DRS-3-5)_night_binning.rdb',
+#                    sep='\t', comment='#', skiprows=[1, ])
 
-t = data['rjd']
-y = data['vrad']
-# Correct offset
-y = y - 31334.45
-ey = data['svrad']
-# rhk = data['rhk']
+# t = data['rjd']
+# y = data['vrad']
+# # Correct offset
+# y = y - 31334.45
+# ey = data['svrad']
+# # rhk = data['rhk']
 
 # # Plot of raw RV data
 # plt.figure(0)

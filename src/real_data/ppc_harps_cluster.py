@@ -82,7 +82,7 @@ if args_params.resume:
 # Assign modelpath
 filepath = os.path.dirname(__file__)
 modelpath = os.path.join(
-    filepath, 'configfiles/hd40307_model_vizier_cluster.py')
+    filepath, 'configfiles/hd40307_model_newdata.py')
 
 # Generate dictionaries
 parnames, datadict, priordict, fixedpardict = config.read_config(
@@ -202,7 +202,7 @@ if rank == 0:
     print(results)
 
 # Name of data file
-filename = dirname+'results_{}a2.txt'.format(nplanets)
+filename = dirname+'results_{}a.txt'.format(nplanets)
 if args_params.narrow:
     filename = dirname+'results_{}b.txt'.format(nplanets)
 

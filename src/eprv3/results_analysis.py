@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # Results from the EPRV3 paper
 eprv_broadZ = pd.read_csv('eprv3_broadZs.txt')
-eprv_narrowZ = pd.read_csv('eprv3_narrowZ.txt')
+eprv_narrowZ = pd.read_csv('eprv3_narrowZ_norm.txt')
 
 # Path to my results
 filepath = '/home/nunger/tesis/resultados/eprv3/'
@@ -27,8 +27,10 @@ for dfile in datafiles:
             data = pd.read_csv(
                 filepath + f'{dfile}/results{dfile}_{nplanets}a.txt', sep='\t')
             medians[nplanets] = data.median()['log10Z']
-            # medians[nplanets] = data.mean()['log10Z']
             std[nplanets] = data.std()['log10Z']
+            # std[nplanets] = np.sqrt(data.median()[
+            #                         'logZerr']**2 + np.median(np.abs(data['log10Z'].values - data.median()['log10Z']))**2)
+
         except:
             # That configuration hasn't been calculated yet
             # Just leave it at zero
@@ -47,6 +49,8 @@ for dfile in datafiles:
             medians[nplanets] = data.median()['log10Z']
             # medians[nplanets] = data.mean()['log10Z']
             std[nplanets] = data.std()['log10Z']
+            # std[nplanets] = np.sqrt(data.median()[
+            #                         'logZerr']**2 + np.median(np.abs(data['log10Z'].values - data.median()['log10Z']))**2)
         except:
             # That configuration hasn't been calculated yet
             pass
@@ -73,10 +77,38 @@ dif_narrow.rename_axis('Dataset', axis=1, inplace=True)
 print('\nDifference of eprv res with my res: Broad Prior')
 print(dif_narrow)
 
+# Generar archivos con mismo formato que eprv3
+columns = ['comptime', 'nplanets', 'mode_log10Z',
+           'median_log10Z', '-2sigma', '-1sigma', '+1sigma', '+2sigma']
+dframes = []
+br_nr = ['a', 'b']
+savepath = 'paper_results/PolyChord/'
+for typ in br_nr:
+    if typ == 'a':
+        Zdata = medianZ_broad
+        stddata = std_broad
+    else:
+        Zdata = medianZ_narrow
+        stddata = std_narrow
+    for dset in datafiles:
+        filetosave = pd.DataFrame()
+        filetosave[columns[0]] = [1000]*4
+        filetosave[columns[1]] = range(4)
+        filetosave[columns[2]] = Zdata[dset]
+        filetosave[columns[3]] = Zdata[dset]
+        filetosave[columns[4]] = Zdata[dset] - 2*stddata[dset]
+        filetosave[columns[5]] = Zdata[dset] - 1*stddata[dset]
+        filetosave[columns[6]] = Zdata[dset] + 1*stddata[dset]
+        filetosave[columns[7]] = Zdata[dset] + 2*stddata[dset]
+        filetosave.to_csv(
+            savepath+f'evidences_{dset}{typ}.txt', index=False, header=False)
+
+
+# ---------------------- GRFICOS -----------------------------
 # Broad
 plt.figure()
-plt.hlines(0, 0.5, 6.5)
-plt.vlines(np.arange(0.5, 6, 1), -4, 4, linestyles='dashed')
+plt.hlines(0, 0.5, 6.5, linestyles='--', linewidth=1)
+plt.vlines(np.arange(0.5, 6, 1), -5, 5, linestyles='-', linewidth=1)
 plt.errorbar(
     np.arange(1, 7, 1)-0.15, dif_broad.loc[0], yerr=std_broad.loc[0], fmt='.', label='0 Planets')
 plt.errorbar(
@@ -94,12 +126,12 @@ plt.legend()
 
 # Narrow
 plt.figure()
-plt.hlines(0, 0.5, 6.5)
-plt.vlines(np.arange(0.5, 6, 1), -4, 4, linestyles='dashed')
+plt.hlines(0, 0.5, 6.5, linestyles='--', linewidth=1)
+plt.vlines(np.arange(0.5, 6, 1), -5, 5, linestyles='-', linewidth=1)
 plt.errorbar(
-    np.arange(1, 7, 1)-0.15, dif_narrow.loc[0], yerr=std_narrow.loc[0], fmt='.', label='0 Planet')
+    np.arange(1, 7, 1)-0.15, dif_narrow.loc[0], yerr=std_narrow.loc[0], fmt='.', label='0 Planets')
 plt.errorbar(
-    np.arange(1, 7, 1)-0.05, dif_narrow.loc[1], yerr=std_narrow.loc[1], fmt='.', label='1 Planets')
+    np.arange(1, 7, 1)-0.05, dif_narrow.loc[1], yerr=std_narrow.loc[1], fmt='.', label='1 Planet')
 plt.errorbar(
     np.arange(1, 7, 1)+0.05, dif_narrow.loc[2], yerr=std_narrow.loc[2], fmt='.', label='2 Planets')
 plt.errorbar(
@@ -110,4 +142,6 @@ plt.title('Narrow Prior')
 plt.xlabel('Dataset')
 plt.ylabel(r'log(Z) - <log(Z)>')
 plt.legend()
+
 plt.show()
+# -----------------------------------------------------------
