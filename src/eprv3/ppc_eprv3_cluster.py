@@ -34,7 +34,7 @@ parser.add_argument('-nlive', type=int, default=25,
                     help='Number of live points in nested sampling. As: nlive*ndim')
 parser.add_argument('-nrep', type=int, default=3,
                     help='Number of repeats in slice sampling. As: nrep*ndim')
-parser.add_argument('-prec', type=float, default=0.01,
+parser.add_argument('-prec', type=float, default=0.002,
                     help='Precision criterion for termination.')
 parser.add_argument('-dfile', type=int, default=1,
                     help='Which dataset to analyze.')
@@ -93,7 +93,7 @@ if args_params.narrow:
 # Define PolyChord settings
 settings = PolyChordSettings(nDims, nDerived, )
 settings.do_clustering = not args_params.noclust
-settings.nlive = nDims * args_params.nlive
+settings.nlive = args_params.nlive
 settings.num_repeats = nDims * args_params.nrep
 
 settings.base_dir = dirname+'/chains/'
@@ -156,10 +156,10 @@ results = results[order]
 
 # Name of data file
 filename = dirname + \
-    '/results/000{}/results000{}_{}a.txt'.format(datafile, datafile, nplanets)
+    '/results2/000{}/results000{}_{}a.txt'.format(datafile, datafile, nplanets)
 if args_params.narrow:
     filename = dirname + \
-        '/results/000{}/results000{}_{}b.txt'.format(
+        '/results2/000{}/results000{}_{}b.txt'.format(
             datafile, datafile, nplanets)
 
 if rank == 0:
@@ -169,6 +169,8 @@ if rank == 0:
         f = f.append(results)
         f = f[order]
         f.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
+        print('Guardado a:' + filename)
     except:
         # File does not exist, must create it first
         results.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
+        print('Guardado a:' + filename)

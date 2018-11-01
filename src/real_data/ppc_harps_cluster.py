@@ -82,7 +82,7 @@ if args_params.resume:
 # Assign modelpath
 filepath = os.path.dirname(__file__)
 modelpath = os.path.join(
-    filepath, 'configfiles/hd40307_model_newdata.py')
+    filepath, 'configfiles/hd40307_model_vizier_cluster.py')
 
 # Generate dictionaries
 parnames, datadict, priordict, fixedpardict = config.read_config(

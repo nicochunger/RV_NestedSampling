@@ -9,7 +9,7 @@ eprv_broadZ = pd.read_csv('eprv3_broadZs.txt')
 eprv_narrowZ = pd.read_csv('eprv3_narrowZ_norm.txt')
 
 # Path to my results
-filepath = '/home/nunger/tesis/resultados/eprv3/'
+filepath = '/home/nunger/tesis/resultados/eprv3/nlive2000_iter6/'
 datafiles = ['0001', '0002', '0003', '0004', '0005', '0006']
 
 # Initialization of pandas DataFrames for medians
@@ -57,10 +57,10 @@ for dfile in datafiles:
     medianZ_narrow[dfile] = medians
     std_narrow[dfile] = std
 
-print('\nBroad Prior:')
+print('\nMy results of Broad Prior:')
 print(medianZ_broad)
 
-print('\nNarrow Prior:')
+print('\nMy results of Narrow Prior:')
 print(medianZ_narrow)
 
 # Calculate difference
@@ -82,7 +82,7 @@ columns = ['comptime', 'nplanets', 'mode_log10Z',
            'median_log10Z', '-2sigma', '-1sigma', '+1sigma', '+2sigma']
 dframes = []
 br_nr = ['a', 'b']
-savepath = 'paper_results/PolyChord/'
+savepath = 'paper_results/PolyChord2/'
 for typ in br_nr:
     if typ == 'a':
         Zdata = medianZ_broad

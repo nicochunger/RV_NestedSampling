@@ -37,6 +37,8 @@ print(f'Evidence (logZ) = {output.logZ}')
 output.base_dir = os.path.dirname(os.path.abspath(__file__))
 posterior = output.posterior
 samples = posterior.samples
+print(f'Nr. of samples in posterior: {len(samples)}')
+
 
 # Get the medians for each parameter
 paramnames = posterior.getParamNames().list()
@@ -76,7 +78,7 @@ def gauss(x, *p):
 
 
 # Plot posterior for the period of each planet
-fig, ax = plt.subplots(nplanets, 1, figsize=(6, 18))
+fig, ax = plt.subplots(1, nplanets, figsize=(18, 6))
 ax = np.atleast_1d(ax)  # To support 1 planet models
 
 for i in range(nplanets):
@@ -92,13 +94,21 @@ for i in range(nplanets):
     #     period_post, label='Posterior', bins='fd', histtype='step', normed=True)
 
     hist, bin_edges, patches = ax[i].hist(
-        period_post, label='Posterior', bins=500, histtype='step', normed=True)
+        period_post, label='Posterior', bins=2000, histtype='step', normed=True)
+
+    # if i==0:
+    #     plt.figure()
+    #     plt.hist(
+    #     period_post, label='Posterior', bins=2000, histtype='step', normed=True)
+    #     plt.xlabel('Period [d]')
+    #     plt.ylabel('PDF')
+    #     plt.title('Posterior for the 4th planet.')
 
     # Time series of posterior
     # ax[i].plot(period_post, '.')
 
     ax[i].set_title(
-        f"Planet {i+1}. P = {medians[f'planet{i+1}_period'][0]:5.2f}")
+        f"Median period P = {medians[f'planet{i+1}_period'][0]:5.2f}")
     ax[i].set_xlabel('Period [d]')
     ax[i].set_ylabel('PDF')
 
