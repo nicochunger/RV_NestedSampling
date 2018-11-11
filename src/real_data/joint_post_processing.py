@@ -62,22 +62,24 @@ factor = 1
 # With the 1/p0 + 1/Tobs criterion
 # Doing it this way there is no overlap and the right edge of one interval
 # coincides with the left edge of the next one
-pn = 1.25
-center_points = []
-while pn < (Tobs*factor)/2:
-    center_points.append(pn)
-    pn = 1./((1/pn)-(2/(factor*Tobs)))
+# pn = 1.25
+# center_points = []
+# while pn < (Tobs*factor)/2:
+#     center_points.append(pn)
+#     pn = 1./((1/pn)-(2/(factor*Tobs)))
 
-# center_points = np.logspace(0, 3, 3000)  # Scale uniform in log
+width = 4/Tobs
+N = int((1-1e-4)/width)
+grid_freq = np.linspace(1e-4, 1, N)
+grid_period = 1/grid_freq[::-1]
 
-print(len(center_points))
-joint_probability = np.zeros(len(center_points))
-for i, pt in enumerate(center_points):
+joint_probability = np.zeros(len(grid_period))
+for i in range(len(grid_period)-1):
     suma = 0
     # Count number of samples which have at least one of the periods in the
     # given range
-    left_edge = pt/(1+(pt/(factor*Tobs)))
-    right_edge = pt/(1-(pt/(factor*Tobs)))
+    left_edge = grid_period[i]
+    right_edge = grid_period[i+1]
     # print([left_edge, pt, right_edge])
     for n, postdict in enumerate(posteriors):
         # Get Indeces for periods
@@ -105,13 +107,19 @@ for i, pt in enumerate(center_points):
     joint_probability[i] = suma
 
     # Print Progress
-    progress = np.round(100*(i/len(center_points)), 1)
+    progress = np.round(100*(i/len(grid_period)), 1)
     print(f'Progress: {progress}%', end='\r')
 
-logp = 1-joint_probability
-plt.plot(center_points, logp)
-plt.yscale('log')
-# plt.plot(center_points, joint_probability)
+print(sum(joint_probability))
+
+pino0 = joint_probability.nonzero()
+grid_period = np.array(grid_period)
+
+# logp = 1-joint_probability
+# plt.plot(grid_period, logp, 'k.-')
+# plt.yscale('log')
+plt.plot(grid_period, joint_probability, 'k.-')
+# plt.hist(joint_probability, bins=grid_period, histtype='step')
 
 plt.xscale('log')
 plt.xlabel('Period')
