@@ -84,9 +84,9 @@ def prior(hypercube):
 # Filepath for the polychord data and storing the samples
 dirname = filepath
 if args_params.cluster:
-    dirname = '/scratch/nunger/nathan/'
+    dirname = '/scratch/nunger/nathan'
 timecode = time.strftime("%m%d_%H%M")
-folder_path = 'nathan_model{}_'.format(model) + timecode
+folder_path = 'saved_runs/nathan_model{}_'.format(model) + timecode
 if not args_params.save:
     # Save the samples in a dump folder if the data shouldn't be saved
     # This overwrites any data saved before of the same model
@@ -133,46 +133,46 @@ if rank == 0:
     # Log10 of the evidence
     print('\nlog10(Z) = {} \n'.format(output.logZ*0.43429))
 
-# Save output data as a pickle file
-pickle_file = settings.base_dir + '/output.p'
-pickle.dump(output, open(pickle_file, "wb"))
+    # Save output data as a pickle file
+    pickle_file = settings.base_dir + '/output.p'
+    pickle.dump(output, open(pickle_file, "wb"))
 
-# Save evidence and other relevant data
-results = {}
-results['run_time'] = Dt
-results['logZ'] = output.logZ
-results['logZerr'] = output.logZerr
-results['log10Z'] = output.logZ * np.log10(np.e)  # Total evidence in log_10
-results['nlive'] = settings.nlive  # Number of live points
-results['prec'] = settings.precision_criterion  # Precision crtierion
-try:
-    # You need the package getdist to also save the medians of the parameters
-    import getdist
-    isget = 1
-    medians = np.median(output.posterior.samples, axis=0)
-    for i in range(nDims):
-        results[parnames[i]] = medians[i]
-except:
-    pass
+    # Save evidence and other relevant data
+    results = {}
+    results['run_time'] = Dt
+    results['logZ'] = output.logZ
+    results['logZerr'] = output.logZerr
+    results['log10Z'] = output.logZ * \
+        np.log10(np.e)  # Total evidence in log_10
+    results['nlive'] = settings.nlive  # Number of live points
+    results['prec'] = settings.precision_criterion  # Precision crtierion
+    try:
+        # You need the package getdist to also save the medians of the parameters
+        import getdist
+        isget = 1
+        medians = np.median(output.posterior.samples, axis=0)
+        for i in range(nDims):
+            results[parnames[i]] = medians[i]
+    except:
+        pass
 
-# Convert to pandas DataFrame
-results = pd.DataFrame(results, index=[0])
-# Order the parameters
-order = ['run_time', 'logZ', 'logZerr', 'log10Z', 'nlive', 'prec']
-if isget:
-    for par in parnames:
-        order.append(par)
-results = results[order]
+    # Convert to pandas DataFrame
+    results = pd.DataFrame(results, index=[0])
+    # Order the parameters
+    order = ['run_time', 'logZ', 'logZerr', 'log10Z', 'nlive', 'prec']
+    if isget:
+        for par in parnames:
+            order.append(par)
+    results = results[order]
 
-if rank == 0:
-    print('\nParameters:')
-    print(results)
+    if rank == 0:
+        print('\nParameters:')
+        print(results)
 
-# Name of data file
-filename = os.path.join(dirname, 'results/results_model{}.txt'.format(model))
+    # Name of data file
+    filename = os.path.join(
+        dirname, 'results/results_corot/results_model{}.txt'.format(model))
 
-# Only save results if it's the first process
-if rank == 0:
     try:
         # Append results to file
         f = pd.read_csv(filename, sep='\t')

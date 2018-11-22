@@ -24,9 +24,8 @@ datadict = {
 #        PLANETS
 # --------------------
 fpdict = {'k1': [0.0, 1, ['Uniform', 0., 40.]],
-          'period': [0.0, 1, ['UniformFrequency', 1, 1000]],
-          #   'period': [0.0, 1, ['Jeffreys', 1, 1000]],
-          'ecc': [0.1, 1, ['Uniform', 0., 1.]],
+          'period': [0.0, 1, ['UniformFrequency', 58.05, 62.07]],
+          'ecc': [0.0, 0, ['Uniform', 0., 1.]],
           'omega': [0.1, 1, ['Uniform', 0., 2*pi]],
           'ma0': [0.1, 1, ['Uniform', 0., 2*pi]],
           'epoch': [5376, 0]
