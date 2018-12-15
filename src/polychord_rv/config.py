@@ -29,14 +29,15 @@ def read_config(configfile):
     read_data(datadict)
 
     # Change prior ranges dependening on dataset
-    factor = float(1)
+    factor = float(5)
     Tobs = datadict['harps']['data']['Time'].max(
     ) - datadict['harps']['data']['Time'].min()
     freq1 = [1./95.27 + factor/Tobs, 1./95.27 - factor/Tobs]
     input_dict['planet1']['period'][2][1] = 1/freq1[0]
     input_dict['planet1']['period'][2][2] = 1/freq1[1]
-    if model == 2:
-        freq2 = [1./47.635 + factor/Tobs, 1./47.635 - factor/Tobs]
+    if model == 2 or model == 4:
+        alpha = 0.05
+        freq2 = [(1+alpha)/47.635, (1.-alpha)/47.635]
         input_dict['planet2']['period'][2][1] = 1/freq2[0]
         input_dict['planet2']['period'][2][2] = 1/freq2[1]
 

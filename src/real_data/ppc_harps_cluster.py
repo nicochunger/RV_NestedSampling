@@ -62,9 +62,9 @@ start = time.time()
 nplanets = args_params.n  # Number of Planets in the model
 
 # Change number of plantes if resume is true
-dirname = '/media/nunger/Windows/Nico/Facu/Tesis/polychord_chains/'
+dirname = '/media/nunger/Windows/Nico/Facu/Tesis/polychord_chains/NewData/'
 if args_params.cluster:
-    dirname = '/scratch/nunger/polychord_chains/'
+    dirname = '/scratch/nunger/polychord_chains/NewData/'
 if args_params.resume:
     runs = subprocess.check_output(
         'ls -d '+dirname+'*/', shell=True).decode('utf-8').replace(dirname, '').split('/\n')
@@ -82,7 +82,7 @@ if args_params.resume:
 # Assign modelpath
 filepath = os.path.dirname(__file__)
 modelpath = os.path.join(
-    filepath, 'configfiles/hd40307_model_vizier_cluster.py')
+    filepath, 'configfiles/hd40307_model_newdata.py')
 
 # Generate dictionaries
 parnames, datadict, priordict, fixedpardict = config.read_config(
@@ -170,43 +170,41 @@ if rank == 0:
     # Log10 of the evidence
     print('\nlog10(Z) = {} \n'.format(output.logZ*0.43429))
 
-# Save output data as a pickle file
-pickle_file = settings.base_dir + '/output.p'
-pickle.dump(output, open(pickle_file, "wb"))
+    # Save output data as a pickle file
+    pickle_file = settings.base_dir + '/output.p'
+    pickle.dump(output, open(pickle_file, "wb"))
 
-########################################
+    ########################################
 
-# Save evidence and other relevant data
-results = {}
-results['id'] = timecode
-results['run_time'] = Dt
-results['logZ'] = output.logZ
-results['logZerr'] = output.logZerr
-results['log10Z'] = output.logZ * np.log10(np.e)  # Total evidence in log_10
-results['nlive'] = settings.nlive  # Number of live points
-results['prec'] = settings.precision_criterion  # Precision crtierion
-# medians = np.median(output.posterior.samples, axis=0)
-# for i in range(nDims):
-#     results[parnames[i]] = medians[i]
+    # Save evidence and other relevant data
+    results = {}
+    results['id'] = timecode
+    results['run_time'] = Dt
+    results['logZ'] = output.logZ
+    results['logZerr'] = output.logZerr
+    results['log10Z'] = output.logZ * np.log10(np.e)  # Total evidence in log_10
+    results['nlive'] = settings.nlive  # Number of live points
+    results['prec'] = settings.precision_criterion  # Precision crtierion
+    # medians = np.median(output.posterior.samples, axis=0)
+    # for i in range(nDims):
+    #     results[parnames[i]] = medians[i]
 
-# Convert to pandas DataFrame
-results = pd.DataFrame(results, index=[0])
-# Order the parameters
-order = ['id', 'run_time', 'logZ', 'logZerr', 'log10Z', 'nlive', 'prec']
-# for par in parnames:
-#     order.append(par)
-results = results[order]
+    # Convert to pandas DataFrame
+    results = pd.DataFrame(results, index=[0])
+    # Order the parameters
+    order = ['id', 'run_time', 'logZ', 'logZerr', 'log10Z', 'nlive', 'prec']
+    # for par in parnames:
+    #     order.append(par)
+    results = results[order]
 
-if rank == 0:
     print('\nParameters:')
     print(results)
 
-# Name of data file
-filename = dirname+'results_{}a.txt'.format(nplanets)
-if args_params.narrow:
-    filename = dirname+'results_{}b.txt'.format(nplanets)
+    # Name of data file
+    filename = dirname+'results_{}a.txt'.format(nplanets)
+    if args_params.narrow:
+        filename = dirname+'results_{}b.txt'.format(nplanets)
 
-if rank == 0:
     try:
         # Append results to file
         f = pd.read_csv(filename, sep='\t')

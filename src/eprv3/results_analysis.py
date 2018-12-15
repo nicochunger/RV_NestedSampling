@@ -82,7 +82,7 @@ columns = ['comptime', 'nplanets', 'mode_log10Z',
            'median_log10Z', '-2sigma', '-1sigma', '+1sigma', '+2sigma']
 dframes = []
 br_nr = ['a', 'b']
-savepath = 'paper_results/PolyChord2/'
+savepath = 'paper_results/PolyChord-nlive2000-iter6/'
 for typ in br_nr:
     if typ == 'a':
         Zdata = medianZ_broad

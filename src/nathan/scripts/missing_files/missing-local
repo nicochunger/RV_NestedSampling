@@ -1,0 +1,9 @@
+while [ `python get_dfile.py 0 0` -le 0 ]
+do
+    dfile=`python get_dfile.py 0 0`
+    model=`python get_dfile.py 0 1`
+    for iter in {1..5}
+    do
+        python ../../ppc_nathan.py -dfile $dfile -model $model -nlive 50
+    done
+done

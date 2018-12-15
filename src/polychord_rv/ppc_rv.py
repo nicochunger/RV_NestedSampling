@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# file: ppc_eprv3.py
+# file: ppc_rv.py
 
 # Dependencies
 from model_kepler import lnlike, lnprior, preprocess
@@ -54,7 +54,7 @@ args_params = parser.parse_args()
 # Assign modelpath
 model = args_params.model
 filepath = os.path.dirname(os.path.abspath(__file__))
-modelpath = os.path.join(filepath, 'parameters_model{}.py'.format(model))
+modelpath = os.path.join(filepath, 'models/nathan_newmodel{}.py'.format(model))
 
 # Generate dictionaries
 parnames, datadict, priordict, fixedpardict = config.read_config(modelpath)
@@ -171,7 +171,7 @@ if rank == 0:
 
     # Name of data file
     filename = os.path.join(
-        dirname, 'results/results_corot/results_model{}.txt'.format(model))
+        dirname, 'results/results_corot_newmodels/results_corot9_model{}.txt'.format(model))
 
     try:
         # Append results to file

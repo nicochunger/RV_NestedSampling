@@ -1,0 +1,16 @@
+#!/bin/bash
+#SBATCH -p p4 -n 16 -o /scratch/nunger/nathan.out2 -e /scratch/nunger/nathan.err2
+# One Eccentric vs Two circular
+source ~/.bashrc
+module add spack
+module add gcc
+module add python/2.7.15
+module add openmpi/2.1.0
+module add mpi4py/1.3.1
+for model in {1..1}
+do
+    for i in {1..5}
+    do
+        srun --mpi=pmi2 python ~/codigo/src/polychord_rv/ppc_rv.py -model $model -nlive 50 -nrep 4 --cluster
+    done
+done

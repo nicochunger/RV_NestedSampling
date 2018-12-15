@@ -1,0 +1,2 @@
+run_time	logZ	logZerr	log10Z	nlive	prec
+155.66719	-64.24759	 0.65887	-27.90237	70	 0.01000

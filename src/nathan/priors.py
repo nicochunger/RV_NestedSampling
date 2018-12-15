@@ -42,8 +42,8 @@ class uniform_gen(rv_continuous):
         return stats.uniform.cdf(x, loc=xmin, scale=xmax - xmin)
 
     def ppf(self, q, xmin, xmax):
-        return ppf_uniform(q, xmin, xmax)
-        #return xmin + (xmax - xmin)*q
+        #return ppf_uniform(q, xmin, xmax)
+        return xmin + (xmax - xmin)*q
         #return stats.uniform.ppf(q, loc=xmin, scale=xmax - xmin)
 
 def ppf_uniform(q, xmin, xmax):

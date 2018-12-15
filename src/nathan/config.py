@@ -27,7 +27,6 @@ def read_config(configfile, data_path, dfile):
 
     # Read data from file(s)
     # Extract all names of the data files
-    # data_path = '$HOME/codigo/src/nathan/data/cor-gl/'
     data_files = subprocess.check_output(
         'ls {}'.format(data_path), shell=True).decode('utf-8').split('\n')
     data_files.remove('')  # Remove last empty item
@@ -35,16 +34,21 @@ def read_config(configfile, data_path, dfile):
     read_data(datadict)
 
     # Change prior ranges dependening on dataset
-    alpha = 0.1
+    k = 5
     Tobs = datadict['harps']['data']['Time'].max(
     ) - datadict['harps']['data']['Time'].min()
-    freq1 = [1./60 + 2./Tobs, 1./60 - 2./Tobs]
+    freq1 = [1./60 + k/Tobs, 1./60 - k/Tobs]
     input_dict['planet1']['period'][2][1] = 1/freq1[0]
     input_dict['planet1']['period'][2][2] = 1/freq1[1]
-    if model == 2:
+    input_dict['planet1']['epoch'][0] = datadict['harps']['data']['Time'].mean()
+    if model == 2 or model == 4:
+        alpha = 0.05
         freq2 = [(1+alpha)/30, (1-alpha)/30]
         input_dict['planet2']['period'][2][1] = 1/freq2[0]
         input_dict['planet2']['period'][2][2] = 1/freq2[1]
+        input_dict['planet2']['epoch'][0] = datadict['harps']['data']['Time'].mean()
+
+    pprint(input_dict)
 
     # Create prior instances
     priordict = priors.prior_constructor(input_dict, {})
@@ -53,60 +57,6 @@ def read_config(configfile, data_path, dfile):
     fixedpardict = get_fixedparvalues(input_dict)
 
     return parnames, datadict, priordict, fixedpardict
-
-
-# def read_config(configfile, nplanets, narrow):
-#     """
-#     Initialises a sampler object using parameters in config.
-
-#     :param string config: string indicating path to configuration file.
-#     :param int nplanets: integer with the number of planets to be used in the model
-#     :param float narrow: Float indicating how wide to take the narrow priors.
-#                          If it is 0, broad priors will be used instead.
-#     """
-
-#     # Import configuration file as module
-#     c = imp.load_source('c', configfile)
-
-#     # Make copy of all relavant dictionaries and lists
-#     datadict, fpdict, driftdict, harpsdict = map(dict.copy, c.configdicts)
-#     planet_periods = list.copy(c.planet_periods)
-#     periods_std = list.copy(c.periods_std)
-#     # Create input_dict in acordance to number of planets in the model
-#     input_dict = {'harps': harpsdict, 'drift1': driftdict}
-#     for i in range(1, nplanets+1):
-#         input_dict.update({f'planet{i}': copy.deepcopy(fpdict)})
-#         if narrow:
-#             # Change the prior range for the planet periods
-#             if narrow <= 1:
-#                 # Lower limit
-#                 input_dict[f'planet{i}']['period'][2][1] = (1-narrow) * \
-#                     planet_periods[i-1]
-#                 # Upper limit
-#                 input_dict[f'planet{i}']['period'][2][2] = (1+narrow) * \
-#                     planet_periods[i-1]
-#             elif narrow > 1:
-#                 # Lower limit
-#                 input_dict[f'planet{i}']['period'][2][1] = planet_periods[i-1] - \
-#                     narrow*periods_std[i-1]
-#                 # Upper limit
-#                 input_dict[f'planet{i}']['period'][2][2] = planet_periods[i-1] + \
-#                     narrow*periods_std[i-1]
-
-#     pprint(input_dict)
-#     # Create prior instances
-#     priordict = priors.prior_constructor(input_dict, {})
-
-#     # Build list of parameter names
-#     parnames, _ = get_parnames(input_dict)
-
-#     # Read data from file(s)
-#     read_data(c.datadict)
-
-#     # Fixed parameters
-#     fixedpardict = get_fixedparvalues(input_dict)
-
-#     return parnames, datadict, priordict, fixedpardict
 
 
 def get_parnames(input_dict):

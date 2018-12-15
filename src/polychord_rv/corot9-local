@@ -1,0 +1,8 @@
+# One Eccentric vs Two circular
+for model in {1..1}
+do
+    for i in {1..5}
+    do
+        python ppc_rv.py -model $model -nlive 25 -nrep 3
+    done
+done

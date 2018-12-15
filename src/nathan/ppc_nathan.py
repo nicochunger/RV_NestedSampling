@@ -58,18 +58,18 @@ start = time.time()
 # Assign modelpath
 model = args_params.model
 filepath = os.path.dirname(__file__)
-modelpath = os.path.join(filepath, 'nathan_model{}.py'.format(model))
+modelpath = os.path.join(filepath, 'models/nathan_newmodel{}.py'.format(model))
 
 # Generate dictionaries
 datafile = args_params.dfile
-data_path = os.path.join(filepath, 'data/cor-gl/')
+data_path = os.path.join(filepath, 'data/data_2gen/')
 if args_params.cluster:
-    data_path = '/home/spectro/nunger/codigo/src/nathan/data/cor-gl/'
+    data_path = '/home/spectro/nunger/codigo/src/nathan/data/data_2gen/'
 data_files = subprocess.check_output(
     'ls {}'.format(data_path), shell=True).decode('utf-8').split('\n')
 data_files.remove('')  # Remove last empty item
 assert datafile in range(
-    1, 101), "Incorrect datafile has to be one of {}".format(range(1, 101))
+    1, 201), "Incorrect datafile has to be one of {}".format(range(1, 101))
 parnames, datadict, priordict, fixedpardict = config.read_config(
     modelpath, data_path, datafile)
 
@@ -154,44 +154,43 @@ if rank == 0:
     # Log10 of the evidence
     print('\nlog10(Z) = {} \n'.format(output.logZ*0.43429))
 
-# Save output data as a pickle file
-pickle_file = settings.base_dir + '/output.p'
-pickle.dump(output, open(pickle_file, "wb"))
+    # Save output data as a pickle file
+    pickle_file = settings.base_dir + '/output.p'
+    pickle.dump(output, open(pickle_file, "wb"))
 
-# Save evidence and other relevant data
-results = {}
-results['run_time'] = Dt
-results['logZ'] = output.logZ
-results['logZerr'] = output.logZerr
-results['log10Z'] = output.logZ * np.log10(np.e)  # Total evidence in log_10
-results['nlive'] = settings.nlive  # Number of live points
-results['prec'] = settings.precision_criterion  # Precision crtierion
-# medians = np.median(output.posterior.samples, axis=0)
-# for i in range(nDims):
-#     results[parnames[i]] = medians[i]
+    # Save evidence and other relevant data
+    results = {}
+    results['run_time'] = Dt
+    results['logZ'] = output.logZ
+    results['logZerr'] = output.logZerr
+    results['log10Z'] = output.logZ * \
+        np.log10(np.e)  # Total evidence in log_10
+    results['nlive'] = settings.nlive  # Number of live points
+    results['prec'] = settings.precision_criterion  # Precision crtierion
+    medians = np.median(output.posterior.samples, axis=0)
+    for i in range(nDims):
+        results[parnames[i]] = medians[i]
 
-# Convert to pandas DataFrame
-results = pd.DataFrame(results, index=[0])
-# Order the parameters
-order = ['run_time', 'logZ', 'logZerr', 'log10Z', 'nlive', 'prec']
-# for par in parnames:
-#     order.append(par)
-results = results[order]
+    # Convert to pandas DataFrame
+    results = pd.DataFrame(results, index=[0])
+    # Order the parameters
+    order = ['run_time', 'logZ', 'logZerr', 'log10Z', 'nlive', 'prec']
+    for par in parnames:
+        order.append(par)
+    results = results[order]
 
-if rank == 0:
     print('\nParameters:')
     print(results)
 
-# Name of data file
-filename = os.path.join(dirname, 'results3/results_{}_model{}.txt'.format(
-    data_files[datafile-1][5:-4], model))
+    # Name of data file
+    filename = os.path.join(dirname, 'results_2gen/results_{}_model{}.txt'.format(
+        data_files[datafile-1][5:-4], model))
 
-# Only save results if it's the first process
-if rank == 0:
     try:
         # Append results to file
         f = pd.read_csv(filename, sep='\t')
         f = f.append(results)
+        f = f[order]
         f.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
     except:
         # File does not exist, must create it first
