@@ -88,9 +88,28 @@ modelpath = os.path.join(
 parnames, datadict, priordict, fixedpardict = config.read_config(
     modelpath, nplanets, args_params.narrow)
 
+
+# Filepath for the polychord data and storing the samples
+timecode = time.strftime("%m%d_%H%M")
+folder_path = 'hd40307_{}a_'.format(nplanets) + timecode
+if args_params.narrow:
+    folder_path = 'hd40307_{}b_'.format(nplanets) + timecode
+if not args_params.save:
+    # Save the samples in a dump folder if the data shouldn't be saved
+    # This overwrites any data saved before of the same model
+    folder_path = 'dump'
+
+base_dir = os.path.join(dirname, folder_path)
+
 if rank == 0:
     print('\n Parameter names and order:')
     print(parnames)
+    # Save Parameter names list
+    try:
+        pickle.dump(parnames, open(base_dir+'/parnames.p', 'wb'))
+    except:
+        os.makedirs(base_dir)
+        pickle.dump(parnames, open(base_dir+'/parnames.p', 'wb'))
 
 covdict = preprocess(datadict)[0]  # Covariance dictionary
 
@@ -116,21 +135,11 @@ def prior(hypercube):
     return theta
 
 
-# Filepath for the polychord data and storing the samples
-timecode = time.strftime("%m%d_%H%M")
-folder_path = 'hd40307_{}a_'.format(nplanets) + timecode
-if args_params.narrow:
-    folder_path = 'hd40307_{}b_'.format(nplanets) + timecode
-if not args_params.save:
-    # Save the samples in a dump folder if the data shouldn't be saved
-    # This overwrites any data saved before of the same model
-    folder_path = 'dump'
-
 # Define PolyChord settings
 settings = PolyChordSettings(nDims, nDerived, )
 settings.do_clustering = args_params.noclust
 settings.nlive = nDims * args_params.nlive
-settings.base_dir = os.path.join(dirname, folder_path)
+settings.base_dir = base_dir
 settings.file_root = 'hd40307_k{}'.format(nplanets)  # modelpath[12:-3]
 settings.num_repeats = nDims * args_params.nrep
 settings.precision_criterion = args_params.prec
@@ -140,14 +149,6 @@ settings.read_resume = False
 if args_params.resume:
     settings.read_resume = args_params.resume
     settings.base_dir = dirname+prev_run
-
-if rank == 0:
-    # Save Parameter names list
-    try:
-        pickle.dump(parnames, open(settings.base_dir+'/parnames.p', 'wb'))
-    except:
-        os.makedirs(settings.base_dir)
-        pickle.dump(parnames, open(settings.base_dir+'/parnames.p', 'wb'))
 
 # Run PolyChord
 output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
@@ -182,19 +183,20 @@ if rank == 0:
     results['run_time'] = Dt
     results['logZ'] = output.logZ
     results['logZerr'] = output.logZerr
-    results['log10Z'] = output.logZ * np.log10(np.e)  # Total evidence in log_10
+    results['log10Z'] = output.logZ * \
+        np.log10(np.e)  # Total evidence in log_10
     results['nlive'] = settings.nlive  # Number of live points
     results['prec'] = settings.precision_criterion  # Precision crtierion
-    # medians = np.median(output.posterior.samples, axis=0)
-    # for i in range(nDims):
-    #     results[parnames[i]] = medians[i]
+    medians = np.median(output.posterior.samples, axis=0)
+    for i in range(nDims):
+        results[parnames[i]] = medians[i]
 
     # Convert to pandas DataFrame
     results = pd.DataFrame(results, index=[0])
     # Order the parameters
     order = ['id', 'run_time', 'logZ', 'logZerr', 'log10Z', 'nlive', 'prec']
-    # for par in parnames:
-    #     order.append(par)
+    for par in parnames:
+        order.append(par)
     results = results[order]
 
     print('\nParameters:')
