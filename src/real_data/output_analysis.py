@@ -85,7 +85,7 @@ for i in range(nplanets):
     # Mask array to filter values greater than 670
     period_post = post[f'planet{i+1}_period']
     period_post = period_post[np.where(
-        (period_post >= 1) & (period_post <= 670))]
+        (period_post >= 0.5) & (period_post <= 2000))]
     # period_post = ma.masked_inside(post[f'planet{i+1}_period'], 1, 670)
     # print(len(period_post))
 
@@ -96,10 +96,12 @@ for i in range(nplanets):
     hist, bin_edges, patches = ax[i].hist(
         period_post, label='Posterior', bins=2000, histtype='step', normed=True)
 
-    # if i==0:
+    # if i == 0:
     #     plt.figure()
+    #     period_post = period_post[np.where(
+    #         (period_post >= 0.978) & (period_post <= 0.979))]
     #     plt.hist(
-    #     period_post, label='Posterior', bins=2000, histtype='step', normed=True)
+    #         period_post, label='Posterior', bins=2000, histtype='step', normed=True)
     #     plt.xlabel('Period [d]')
     #     plt.ylabel('PDF')
     #     plt.title('Posterior for the 4th planet.')
@@ -108,7 +110,7 @@ for i in range(nplanets):
     # ax[i].plot(period_post, '.')
 
     ax[i].set_title(
-        f"Median period P = {medians[f'planet{i+1}_period'][0]:5.2f}")
+        f"Median period P = {medians[f'planet{i+1}_period'][0]:5.3f}")
     ax[i].set_xlabel('Period [d]')
     ax[i].set_ylabel('PDF')
 
