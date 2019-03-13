@@ -42,8 +42,12 @@ class uniform_gen(rv_continuous):
         return stats.uniform.cdf(x, loc=xmin, scale=xmax - xmin)
 
     def ppf(self, q, xmin, xmax):
+        #return ppf_uniform(q, xmin, xmax)
         return xmin + (xmax - xmin)*q
         #return stats.uniform.ppf(q, loc=xmin, scale=xmax - xmin)
+
+def ppf_uniform(q, xmin, xmax):
+    return xmin + (xmax - xmin)*q
 
 # For backwards compatibility
 class uniform(uniform_gen):
@@ -70,7 +74,7 @@ class jeffreys_gen(rv_continuous):
         cdf = n.where((x < xmax), cdf, 1.0)
         return cdf
 
-    def ppf(self, q, xmin, xmax):
+    def _ppf(self, q, xmin, xmax):
         return xmin * (float(xmax)/xmin) ** q
         # dx = (xmax - xmin)*step
         # x = n.arange(xmin, xmax + dx, dx)
@@ -107,15 +111,42 @@ class modjeff_gen(rv_continuous):
         cdf = n.where(x < xmax, cdf, 1.0)
         return cdf
 
-    def ppf(self, q, x0, xmax):
+    def _ppf(self, q, x0, xmax):
         return x0*((1+float(xmax)/x0) ** q) - x0
         # dx = xmax*step
         # x = n.arange(0, xmax + dx, dx)
         # cdf = self._cdf(x, x0, xmax)
         # # Interpolate the _inverse_ CDF
         # return interpolate.interp1d(cdf, x)(q)
-   
-    
+
+
+class uniformfreq_gen(rv_continuous):
+
+    def init(self, x0, xmax):
+        super(modjeff, self).__init__(a=0.0, shapes='x0, xmax',
+                                      name='modjeff',
+                                      longname='Unfirm prior in frequency but with period')
+        
+    def _argcheck(self, x0, xmax):
+        return (xmax > x0) & (x0 > 0)
+
+    def _pdf(self, x, x0, xmax):
+        pdf = (xmax*x0)/(x**2 * (xmax-x0))
+        return pdf
+
+    def _cdf(self, x, x0, xmax):
+        cdf = x0*xmax/(xmax-x0) * ((1/x0) - (1/x0))
+        cdf = n.where(x >= 0.0, cdf, 0.0)
+        cdf = n.where(x < xmax, cdf, 1.0)
+        return cdf
+
+    def ppf(self, q, x0, xmax):
+        return ppf_uniformfreq(q, x0, xmax)
+        #return x0 / (1 - q*(xmax-x0)/xmax)
+
+def ppf_uniformfreq(q, x0, xmax):
+    return x0 / (1 - q*(xmax-x0)/xmax)
+
 class binorm_gen(rv_continuous):
 
     def _argcheck(self, mu1, sigma1, mu2, sigma2, A):
@@ -261,7 +292,7 @@ class truncrayleigh_gen(rv_continuous):
         cdf = n.where((x < xmax), cdf, 1.0)
         return cdf
 
-    def ppf(self, q, sigma, xmax):
+    def _ppf(self, q, sigma, xmax):
         A = 1 - n.exp(-xmax**2/(2*sigma**2))
         ppf = n.sqrt(-2*sigma**2*n.log(1-(q*A)))
         return ppf
@@ -446,6 +477,8 @@ Jeffreys = jeffreys_gen(name='Jeffreys distribution',
                         shapes='xmin, xmax', a=0.0)
 ModJeffreys = modjeff_gen(name='Modified Jeffreys distribution',
                                shapes='x0, xmax', a=0.0)
+UniformFrequency = uniformfreq_gen(name='Uniform in Frequency but with period',
+                                    shapes='x0, xmax')
 Normal = stats.norm
 LogNormal = stats.lognorm
 Log10Normal = log10norm_gen(name='Log10 Normal distribution',
