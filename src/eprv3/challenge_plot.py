@@ -52,15 +52,18 @@ def plot_results(prior):
         med = [Zs.median()[dset] for dset in datasets]
         Zs_med[i] = (Zs, med)
 
+    print(Zs_med[0][0])
+    print(Zs_med[0][1])
+
     # Plots
     x = np.arange(1, 7)
     offset = np.linspace(-0.45, 0.45, len(methods))
     fig, ax = plt.subplots(2, 2, figsize=(12, 8))
     ax = ax.flatten()
-    if prior == 'a':
-        fig.suptitle('Broad Prior', fontsize=20)
-    elif prior == 'b':
-        fig.suptitle('Narrow Prior', fontsize=20)
+    # if prior == 'a':
+    #     fig.suptitle('Broad Prior', fontsize=20)
+    # elif prior == 'b':
+    #     fig.suptitle('Narrow Prior', fontsize=20)
     plt.subplots_adjust(top=0.94, bottom=0.05, right=0.98, left=0.07,
                         hspace=0.15, wspace=0.15)
     for i in range(4):
@@ -101,7 +104,7 @@ def plot_results(prior):
 plot_results('a')
 
 # Plot Narrow Priors
-plot_results('b')
+# plot_results('b')
 
 # Show plots
 plt.show()

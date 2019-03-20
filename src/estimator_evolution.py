@@ -21,14 +21,14 @@ pdf = pdf = np.array([Uniform(t, Tmin, Tmax) for t in T])
 cdf = CDF(pdf, T)
 
 # Number of live points to be analized
-Nmin = 2000
-Nmax = 2001
+Nmin = 400
+Nmax = 401
 step = 2
 N = np.arange(Nmin, Nmax, step)
 Nsize = len(N)
 
 # Number of iterations of the Nested Sampling Algorithm for each N
-niter = 1
+niter = 50
 
 # Preallocation of arrays
 results = []  # List of arrays with all the evidences

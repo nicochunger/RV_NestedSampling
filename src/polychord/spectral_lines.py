@@ -5,6 +5,7 @@
 import time
 import datetime
 import numpy as np
+import pandas as pd
 import PyPolyChord as PPC
 from PyPolyChord.settings import PolyChordSettings
 from PyPolyChord.priors import UniformPrior
@@ -78,8 +79,34 @@ output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
 end = time.time()
 Dt = end - start
 print(f'\nTotal run time was: {datetime.timedelta(seconds=int(Dt))}')
-
 print(f'\nZ = {np.exp(output.logZ)}')
+
+# Save evidence and other relevant data
+results = {}
+results['run_time'] = Dt
+results['logZ'] = output.logZ
+results['logZerr'] = output.logZerr
+results['nlive'] = settings.nlive  # Number of live points
+results['nreap'] = settings.num_repeats
+results['prec'] = settings.precision_criterion  # Precision crtierion
+order = ['run_time', 'logZ', 'logZerr', 'nlive', 'nreap', 'prec']
+
+# Convert to pandas DataFrame
+results = pd.DataFrame(results, index=[0])
+results = results[order]
+
+# Name of data file
+filename = 'results_ppc_spectral_lines.txt'
+
+try:
+    # Append results to file
+    f = pd.read_csv(filename, sep='\t')
+    f = f.append(results)
+    f = f[order]
+    f.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
+except:
+    # File does not exist, must create it first
+    results.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
 
 
 # try:
