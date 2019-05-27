@@ -13,7 +13,7 @@ do
     do
         for iter in {1..5}
         do
-            srun --mpi=pmi2 python ../../ppc_nathan.py -dfile $dfile -model $model -nlive 50 --cluster
+            srun --mpi=pmi2 python ../../ppc_nathan.py -dfile $dfile -model $model -nlive 25 --cluster
         done
     done
 done

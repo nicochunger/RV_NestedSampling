@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from uncertainties import ufloat
+from uncertainties.umath import log10, exp
 
 # Path to my results
 nlive2000_filepath = '/home/nunger/tesis/resultados/eprv3/nlive2000_iter6/'
@@ -22,8 +24,8 @@ for dfile in datafiles:
         try:
             data = pd.read_csv(
                 nlive2000_filepath + f'{dfile}/results{dfile}_{nplanets}a.txt', sep='\t')
-            medians[nplanets] = data.median()['log10Z']
-            std[nplanets] = data.std()['log10Z']
+            medians[nplanets] = data.median()['logZ']
+            std[nplanets] = data.std()['logZ']
             # std[nplanets] = np.sqrt(data.median()[
             #                         'logZerr']**2 + np.median(np.abs(data['log10Z'].values - data.median()['log10Z']))**2)
 
@@ -43,8 +45,8 @@ for dfile in datafiles:
         try:
             data = pd.read_csv(
                 nlive25nd_filepath + f'{dfile}/results{dfile}_{nplanets}a.txt', sep='\t')
-            medians[nplanets] = data.median()['log10Z']
-            std[nplanets] = data.std()['log10Z']
+            medians[nplanets] = data.median()['logZ']
+            std[nplanets] = data.std()['logZ']
             # std[nplanets] = np.sqrt(data.median()[
             #                         'logZerr']**2 + np.median(np.abs(data['log10Z'].values - data.median()['log10Z']))**2)
 
@@ -54,6 +56,8 @@ for dfile in datafiles:
             pass
     medianZ_25nd[dfile] = medians
     std_25nd[dfile] = std
+
+stds = [std_2000, std_25nd]
 
 # print("\nnlive = 2000")
 # print(medianZ_2000)
@@ -65,10 +69,16 @@ oddsfactor_2000_nelson = pd.DataFrame(
     columns=datafiles, index=["1v0", "2v1", "3v2"])
 oddsfactor_2000_nelson.name = "Odds Factors for nlive=2000 with nelsons prior."
 
+oddsfactor_err_2000_nelson = pd.DataFrame(
+    columns=datafiles, index=["1v0", "2v1", "3v2"])
+
 oddsfactor_2000_uniform = pd.DataFrame(
     columns=datafiles, index=["1v0", "2v1", "3v2"])
 
 oddsfactor_25nd_nelson = pd.DataFrame(
+    columns=datafiles, index=["1v0", "2v1", "3v2"])
+
+oddsfactor_err_25nd_nelson = pd.DataFrame(
     columns=datafiles, index=["1v0", "2v1", "3v2"])
 
 oddsfactor_25nd_uniform = pd.DataFrame(
@@ -77,6 +87,7 @@ oddsfactor_25nd_uniform = pd.DataFrame(
 
 # Calculate all the odds factor
 nelson = [oddsfactor_2000_nelson, oddsfactor_25nd_nelson]
+nelson_err = [oddsfactor_err_2000_nelson, oddsfactor_err_25nd_nelson]
 uniform = [oddsfactor_2000_uniform, oddsfactor_25nd_uniform]
 medians = [medianZ_2000, medianZ_25nd]
 
@@ -103,16 +114,38 @@ for i, nlive in enumerate(nelson):
     for datafile in datafiles:
         for j in range(3):
             prior_factor = nelson_prior(j+1) / nelson_prior(j)
+
+            # Z1 = ufloat(medians[i][datafile][j], stds[i][datafile][j])
+            # Z2 = ufloat(medians[i][datafile][j+1], stds[i][datafile][j+1])
+            # if i == 0 and j == 0:
+            #     print(Z1)
+            #     print(Z2)
+
+            # odds = prior_factor * (exp(Z2) / exp(Z1))
+
             odds = prior_factor * (np.exp(medians[i][datafile][j+1]) /
                                    np.exp(medians[i][datafile][j]))
-            nlive[datafile][j] = round(np.log10(odds), 3)
+            odds_err = np.abs(odds) * \
+                np.sqrt((stds[i][datafile][j+1]**2 + stds[i][datafile][j]**2))
+            nelson_err[i][datafile][j] = odds_err / \
+                (np.abs(odds)*np.log(10))
+            nlive[datafile][j] = np.log10(odds)
 
-print("\n Uniform prior")
-print(uniform[0])
-print("")
-print(uniform[1])
+# print("\n Uniform prior")
+# print(uniform[0])
+# print("")
+# print(uniform[1])
 
-print("\n Nelson prior")
-print(nelson[0])
-print("")
-print(nelson[1])
+# print("\n nlive = 2000")
+# print(nelson[0])
+# print("")
+# print(nelson_err[0])
+# print("")
+# print("nlive = 25*ndim")
+# print(nelson[1])
+# print("")
+# print(nelson_err[1])
+# print("")
+
+for i in range(4):
+    print(nelson_prior(i))

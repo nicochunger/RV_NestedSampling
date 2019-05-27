@@ -5,45 +5,32 @@ import pandas as pd
 import numpy as np
 import numpy.ma as ma
 from pprint import pprint
-from scipy.optimize import curve_fit
-import argparse
 import os
-
-# Read arguments
-parser = argparse.ArgumentParser()
-parser.add_argument('--fit', action='store_true',
-                    help='If posterior should be fit with a gaussian.')
-args_params = parser.parse_args()
-
-# datapath = '/home/nunger/tesis/codigo/data/HD40307/'
-# data = pd.read_csv(datapath+'HD40307_HARPS03(DRS-3-5)_night_binning.rdb',
-#                    sep='\t', comment='#', skiprows=[1, ])
-
-# t = data['rjd']
-# y = data['vrad']
-# # Correct offset
-# y = y - 31334.45
-# ey = data['svrad']
-# # rhk = data['rhk']
-
-# # Plot of raw RV data
-# plt.figure(0)
-# plt.errorbar(t, y, yerr=ey, fmt='k.')
+import getdist
+from uncertainties import ufloat
+from uncertainties.umath import *
 
 # Load evidence results
 output = pickle.load(open('output.p', 'rb'))
-print(f'Evidence (logZ) = {output.logZ}')
+print(f'Evidence (logZ) = {output.logZ:.2f} +/- {output.logZerr:.2f}')
 # Change direcory of posterior
 output.base_dir = os.path.dirname(os.path.abspath(__file__))
 posterior = output.posterior
-samples = posterior.samples
-print(f'Nr. of samples in posterior: {len(samples)}')
+# posterior.removeBurn(0.5)
 
+# Construst "real" posterior
+idxs = []
+for i, x in enumerate(posterior.weights):
+    if np.random.random() < x:
+        idxs.append(i)
+
+samples = posterior.samples[idxs]
+print(f'Nr. of samples in posterior: {len(samples)}')
 
 # Get the medians for each parameter
 paramnames = posterior.getParamNames().list()
 medians = dict(zip(paramnames, zip(np.round(np.median(
-    samples, axis=0), 5), np.round(np.std(samples, axis=0), 7))))
+    samples, axis=0), 7), np.round(np.std(samples, axis=0), 7))))
 names = ['c', 'd', 'b', 'f', 'g']
 pprint(medians)
 
@@ -78,72 +65,113 @@ def gauss(x, *p):
 
 
 # Plot posterior for the period of each planet
-fig, ax = plt.subplots(1, nplanets, figsize=(18, 6))
+fig, ax = plt.subplots(1, nplanets, figsize=(12, 3))
 ax = np.atleast_1d(ax)  # To support 1 planet models
 
+
+def int_hist(hist, bin_edges):
+    res = 0
+    lim95 = 0
+    counter1 = 1
+    lim99 = 0
+    counter2 = 1
+    for i in range(len(hist)):
+        width = bin_edges[i+1] - bin_edges[i]
+        res += hist[i] * width
+        if res > 0.95 and counter1:
+            lim95 = bin_edges[i]
+            counter1 = 0
+        if res > 0.99 and counter2:
+            lim99 = bin_edges[i]
+            counter2 = 0
+
+    return res, lim95, lim99
+
+
+# MINIM MASS
+def min_mass(K, period, ecc, mstar):
+    """ 
+    Calculates de minimum mass using known parameters for the planet and the star
+    K [m/s]: radial velocity amplitud 
+    period [days]: orbital period of planet
+    ecc: eccentricity of planet
+    mstar [Msun]: Mass of star in Sun masses
+    """
+    # Unit conversions
+    period *= 86400 # days to seconds
+    mstar *= 1.9891e30 # Sun masses to kg
+
+    msini = K*(mstar)**(2/3) * (period/(2*np.pi*6.67e-11))**(1/3) * sqrt(1-ecc**2)
+
+    # Convert to Earth masses
+    msini /= 5.972e24
+    return msini
+
+
+def semi_mayor_axis(P, mstar):
+    """ Calculates the semimayor axis for a planet.
+    P [days]: orbital period of planet
+    mstar [Msun]: Mass of star in Solar Masses """
+    # Unit conversion
+    P *= 86400 # days to seconds
+    mstar *= 1.9891e30 # Msun to kg
+    G = 6.67e-11
+
+    sma = ((P**2 * G * mstar) / (4*np.pi**2))**(1/3)
+
+    # In AU
+    sma /= 1.496e+11
+
+    return sma
+
+# MAIN LOOP
 for i in range(nplanets):
-    # Mask array to filter values greater than 670
     period_post = post[f'planet{i+1}_period']
-    period_post = period_post[np.where(
-        (period_post >= 0.5) & (period_post <= 2000))]
-    # period_post = ma.masked_inside(post[f'planet{i+1}_period'], 1, 670)
-    # print(len(period_post))
+    median = medians[f'planet{i+1}_period'][0]
 
     # Histogram
     # hist, bin_edges, patches = ax[i].hist(
     #     period_post, label='Posterior', bins='fd', histtype='step', normed=True)
-
     hist, bin_edges, patches = ax[i].hist(
-        period_post, label='Posterior', bins=2000, histtype='step', normed=True)
+        period_post, label='Posterior', bins=40, histtype='step', normed=True)
 
-    # if i == 0:
+    res, lim95, lim99 = int_hist(hist, bin_edges)
+    # print(
+    #     f"Median ({median:5.2f}): lim95 = {lim95:5f}; lim99 = {lim99:5f}; res = {res:5f}")
+
+    # Graph posterior only for planet f (0.978)
+    # if medians[f'planet{i+1}_period'][0] < 1:
     #     plt.figure()
-    #     period_post = period_post[np.where(
-    #         (period_post >= 0.978) & (period_post <= 0.979))]
     #     plt.hist(
-    #         period_post, label='Posterior', bins=2000, histtype='step', normed=True)
-    #     plt.xlabel('Period [d]')
+    #         period_post, label='Posterior', bins="auto", histtype='step', normed=True)
+    #     plt.xlabel('Período [d]')
     #     plt.ylabel('PDF')
-    #     plt.title('Posterior for the 4th planet.')
+    #     plt.title(f"Mediana = {medians[f'planet{i+1}_period'][0]:5.5f} días")
 
     # Time series of posterior
     # ax[i].plot(period_post, '.')
 
     ax[i].set_title(
-        f"Median period P = {medians[f'planet{i+1}_period'][0]:5.3f}")
-    ax[i].set_xlabel('Period [d]')
-    ax[i].set_ylabel('PDF')
+        f"Mediana = {median:5.3f} días")
+    ax[i].set_xlabel('Período [d]')
+    if i == 0:
+        ax[i].set_ylabel('PDF')
 
-    if args_params.fit:
-        # Gaussian fit
-        # Calculate bin centers
-        bin_centres = (bin_edges[:-1] + bin_edges[1:]) / 2
-        p0 = [10, medians[f'planet{i+1}_period']
-              [0], medians[f'planet{i+1}_period'][1]]
-        coeff, var_matrix = curve_fit(
-            gauss, bin_centres, hist, p0=p0)  # Fit data
-        x = np.linspace(min(period_post),
-                        max(period_post), 2000)
-        hist_fit = gauss(x, *coeff)
-        ax[i].plot(x, hist_fit, 'r-', label='Gaussian fit')
+    # # Minimum mass calculation
+    K = ufloat(medians[f'planet{i+1}_k1'][0], medians[f'planet{i+1}_k1'][1])
+    period = ufloat(median, medians[f'planet{i+1}_period'][1])
+    ecc = ufloat(medians[f'planet{i+1}_ecc'][0], medians[f'planet{i+1}_ecc'][1])
+    mstar = ufloat(0.75, 0.035)
+    print(f"Planet {period:.2f}, m*sin(i) = {min_mass(K, period, ecc, mstar):5f} Mearth;  a = {semi_mayor_axis(period, mstar)} AU")
 
-        # Information box of fit parameters
-        textstr = '\n'.join((
-            'Fitted values:',
-            r'$A=%.5f$' % (coeff[0], ),
-            r'$\mu=%.5f$' % (coeff[1], ),
-            r'$\sigma=%.5f$' % (abs(coeff[2]), )))
-        # these are matplotlib.patch.Patch properties
-        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-        # place a text box in upper left in axes coords
-        ax[i].text(0.05, 0.95, textstr, transform=ax[i].transAxes,
-                   fontsize=11, verticalalignment='top', bbox=props)
-        ax[i].legend()
+
+
+
 plt.tight_layout()
 plt.show()
 # -------------------------------------------------------
 
-# # ---------- PHASE FOLDING -----------------
+# ---------- PHASE FOLDING -----------------
 # phases = np.zeros((len(t), nplanets))
 # for i in range(nplanets):
 #     phases[:, i] = foldAt(t, medians[f'planet{i+1}_period'])

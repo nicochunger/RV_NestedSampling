@@ -58,7 +58,8 @@ start = time.time()
 # Assign modelpath
 model = args_params.model
 filepath = os.path.dirname(__file__)
-modelpath = os.path.join(filepath, 'models/nathan_newmodel{}.py'.format(model))
+modelpath = os.path.join(
+    filepath, 'models/lognormal_prior/nathan_newmodel{}.py'.format(model))
 
 # Generate dictionaries
 datafile = args_params.dfile
@@ -116,10 +117,16 @@ settings = PolyChordSettings(nDims, nDerived, )
 settings.do_clustering = args_params.noclust
 settings.nlive = nDims * args_params.nlive
 settings.base_dir = os.path.join(dirname, folder_path)
-settings.file_root = 'nathan_model{}'.format(model)
+settings.file_root = 'nathan_dfile{}_model{}'.format(datafile, model)
 settings.num_repeats = nDims * args_params.nrep
 settings.precision_criterion = args_params.prec
 settings.read_resume = False
+settings.write_resume = False
+settings.write_prior = False
+settings.write_dead = False
+settings.write_live = False
+settings.write_paramnames = False
+settings.write_stats = True
 
 # Change settings if resume is true
 # if args_params.resume:
@@ -134,7 +141,9 @@ except:
     pickle.dump(parnames, open(settings.base_dir+'/parnames.p', 'wb'))
 
 # Run PolyChord
-output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
+salida = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
+
+print(salida.logZ)
 
 # Parameter names
 # latexnames = [r'\sigma_J', r'C']
@@ -144,7 +153,7 @@ output = PPC.run_polychord(logLikelihood, nDims, nDerived, settings, prior)
 # paramnames = [(x, latexnames[i]) for i, x in enumerate(parnames)]
 paramnames = [(x, x) for x in parnames]
 
-output.make_paramnames_files(paramnames)
+salida.make_paramnames_files(paramnames)
 
 end = time.time()  # End time
 Dt = end - start
@@ -152,22 +161,22 @@ if rank == 0:
     print('\nTotal run time was: {}'.format(
         datetime.timedelta(seconds=int(Dt))))
     # Log10 of the evidence
-    print('\nlog10(Z) = {} \n'.format(output.logZ*0.43429))
+    print('\nlog10(Z) = {} \n'.format(salida.logZ*0.43429))
 
-    # Save output data as a pickle file
-    pickle_file = settings.base_dir + '/output.p'
-    pickle.dump(output, open(pickle_file, "wb"))
+    # Save salida data as a pickle file
+    pickle_file = settings.base_dir + '/salida.p'
+    pickle.dump(salida, open(pickle_file, "wb"))
 
     # Save evidence and other relevant data
     results = {}
     results['run_time'] = Dt
-    results['logZ'] = output.logZ
-    results['logZerr'] = output.logZerr
-    results['log10Z'] = output.logZ * \
+    results['logZ'] = salida.logZ
+    results['logZerr'] = salida.logZerr
+    results['log10Z'] = salida.logZ * \
         np.log10(np.e)  # Total evidence in log_10
     results['nlive'] = settings.nlive  # Number of live points
     results['prec'] = settings.precision_criterion  # Precision crtierion
-    medians = np.median(output.posterior.samples, axis=0)
+    medians = np.median(salida.posterior.samples, axis=0)
     for i in range(nDims):
         results[parnames[i]] = medians[i]
 
@@ -183,7 +192,7 @@ if rank == 0:
     print(results)
 
     # Name of data file
-    filename = os.path.join(dirname, 'results_2gen/results_{}_model{}.txt'.format(
+    filename = os.path.join(dirname, 'results_jeff-16/results_{}_model{}.txt'.format(
         data_files[datafile-1][5:-4], model))
 
     try:

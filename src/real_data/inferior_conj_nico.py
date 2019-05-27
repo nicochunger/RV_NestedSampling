@@ -49,17 +49,24 @@ def t_pericentre(ml0, omega, period, epoch, bigomega=0):
     # Mean anomaly at epoch
     m_epoch = ml0_rad - omega_rad - bigomega
 
-    return epoch - m_epoch % (2*pi)/(2*pi) * period
+    return epoch - ((m_epoch % (2*pi)) / (2*pi)) * period
 
 
 if __name__ == "__main__":
     # Load evidence results
     output = pickle.load(open('output.p', 'rb'))
     print(f'Evidence (logZ) = {output.logZ}')
-    # Change direcory of posterior
+    # Change directory of posterior
     output.base_dir = os.path.dirname(os.path.abspath(__file__))
     posterior = output.posterior
-    samples = posterior.samples
+
+    # Construst "real" posterior
+    idxs = []
+    for i, x in enumerate(posterior.weights):
+        if np.random.random() < x:
+            idxs.append(i)
+
+    samples = posterior.samples[idxs]
     paramnames = posterior.getParamNames().list()
 
     # Count the number of planets in model
@@ -98,12 +105,14 @@ if __name__ == "__main__":
     inf_conj = t_infconj(ecc, omega_deg, time_pericentre, period)
     ecc_infconj = e_infconj(ecc, omega_deg)
 
-    # infconj_filtered = inf_conj[np.where(
-    #     (inf_conj >= 54500) & (inf_conj <= 54530))]
-    # plt.figure(0)
-    # plt.hist(
-    #     infconj_filtered, label='Inferior Conjunction Time', bins=1000, histtype='step', normed=True)
+    plt.figure(0)
+    plt.hist(
+        inf_conj, label='Inferior Conjunction Time', bins='fd', histtype='step', normed=True)
 
+    # plt.figure(2)
+    # plt.hist(
+    #     time_pericentre, label='Inferior Conjunction Time', bins='fd', histtype='step', normed=True)
+    # plt.axvline(epoch)
     # plt.figure(1)
     # plt.hist(
     #     ecc_infconj, label='Eccentric Anomaly', bins='fd', histtype='step', normed=True)
@@ -112,6 +121,5 @@ if __name__ == "__main__":
     print(timecode)
     # Save samples
     np.savetxt(f"inferior_conjunction_{timecode}.txt", inf_conj)
-    np.savetxt(f"ecc_anom_infconj_{timecode}.txt", ecc_infconj)
 
     plt.show()

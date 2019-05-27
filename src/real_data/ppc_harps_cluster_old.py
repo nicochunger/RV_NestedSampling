@@ -66,9 +66,9 @@ start = time.time()
 nplanets = args_params.n  # Number of Planets in the model
 
 # Change number of plantes if resume is true
-dirname = '/media/nunger/Windows/Nico/Facu/Tesis/polychord_chains/NewData/definitive'
+dirname = '/media/nunger/Windows/Nico/Facu/Tesis/polychord_chains/definitive'
 if args_params.cluster:
-    dirname = '/scratch/nunger/polychord_chains/NewData/definitive'
+    dirname = '/scratch/nunger/polychord_chains/definitive'
 if args_params.resume:
     runs = subprocess.check_output(
         'ls -d '+dirname+'*/', shell=True).decode('utf-8').replace(dirname, '').split('/\n')
@@ -86,7 +86,7 @@ if args_params.resume:
 # Assign modelpath
 filepath = os.path.dirname(__file__)
 modelpath = os.path.join(
-    filepath, 'configfiles/hd40307_model_newdata.py')
+    filepath, 'configfiles/hd40307_model_vizier_cluster.py')
 
 # Generate dictionaries
 parnames, datadict, priordict, fixedpardict = config.read_config(

@@ -8,7 +8,6 @@ import datetime
 import argparse
 import subprocess
 import os
-import random
 
 # Dependencies
 import numpy as np
@@ -54,9 +53,6 @@ parser.add_argument('--save', action='store_true',
 parser.add_argument('--cluster', action='store_true',
                     help='If it is going to be run on the cluster.')
 
-parser.add_argument('-nano', type=int, default=1,
-                    help='Nano seconds used as seed for current job.')
-
 args_params = parser.parse_args()
 
 # Initialize start time to measure run time
@@ -66,9 +62,9 @@ start = time.time()
 nplanets = args_params.n  # Number of Planets in the model
 
 # Change number of plantes if resume is true
-dirname = '/media/nunger/Windows/Nico/Facu/Tesis/polychord_chains/NewData/definitive'
+dirname = '/media/nunger/Windows/Nico/Facu/Tesis/polychord_chains/definitive'
 if args_params.cluster:
-    dirname = '/scratch/nunger/polychord_chains/NewData/definitive'
+    dirname = '/scratch/nunger/polychord_chains/definitive'
 if args_params.resume:
     runs = subprocess.check_output(
         'ls -d '+dirname+'*/', shell=True).decode('utf-8').replace(dirname, '').split('/\n')
@@ -86,36 +82,28 @@ if args_params.resume:
 # Assign modelpath
 filepath = os.path.dirname(__file__)
 modelpath = os.path.join(
-    filepath, 'configfiles/hd40307_model_newdata.py')
+    filepath, 'configfiles/hd40307_model_vizier_cluster.py')
 
 # Generate dictionaries
 parnames, datadict, priordict, fixedpardict = config.read_config(
     modelpath, nplanets, args_params.narrow)
 
 
-# Filepath for the polychord data and storing the samples
-timecode = time.strftime("%m%d")
-folder_path = 'hd40307_{}a_'.format(nplanets) + timecode
-if args_params.narrow:
-    folder_path = 'hd40307_{}b_'.format(nplanets) + timecode
-if not args_params.save:
-    # Save the samples in a dump folder if the data shouldn't be saved
-    # This overwrites any data saved before of the same model
-    folder_path = 'dump'
-
-random.seed(args_params.nano)
-rnd = "%04d" % random.randint(0, 9999)
-if folder_path != "dump":
-    # Use time in nano seconds as seed to create a unique folder code name
-    folder_path += '_' + rnd
-    base_dir = os.path.join(dirname, folder_path)
-else:
-    base_dir = os.path.join(dirname, folder_path)
-
 if rank == 0:
+    # Filepath for the polychord data and storing the samples
+    timecode = time.strftime("%m%d_%H%M")
+    folder_path = 'hd40307_{}a_'.format(nplanets) + timecode
+    if args_params.narrow:
+        folder_path = 'hd40307_{}b_'.format(nplanets) + timecode
+    if not args_params.save:
+        # Save the samples in a dump folder if the data shouldn't be saved
+        # This overwrites any data saved before of the same model
+        folder_path = 'dump'
+
+    base_dir = os.path.join(dirname, folder_path)
+
     print('\n Parameter names and order:')
     print(parnames)
-    print(base_dir)
     # Save Parameter names list
     try:
         pickle.dump(parnames, open(base_dir+'/parnames.p', 'wb'))
@@ -191,27 +179,24 @@ if rank == 0:
 
     # Save evidence and other relevant data
     results = {}
-    results['id'] = timecode + '_' + rnd
+    results['id'] = timecode
     results['run_time'] = Dt
     results['logZ'] = output.logZ
     results['logZerr'] = output.logZerr
-    # results['log10Z'] = output.logZ * \
-    #     np.log10(np.e)  # Total evidence in log_10
-    results['ndims'] = int(nDims)
-    results['nlive'] = int(settings.nlive)  # Number of live points
-    results['nreap'] = int(settings.num_repeats)
+    results['log10Z'] = output.logZ * \
+        np.log10(np.e)  # Total evidence in log_10
+    results['nlive'] = settings.nlive  # Number of live points
     results['prec'] = settings.precision_criterion  # Precision crtierion
-    # medians = np.median(output.posterior.samples, axis=0)
-    # for i in range(nDims):
-    #     results[parnames[i]] = medians[i]
+    medians = np.median(output.posterior.samples, axis=0)
+    for i in range(nDims):
+        results[parnames[i]] = medians[i]
 
     # Convert to pandas DataFrame
     results = pd.DataFrame(results, index=[0])
     # Order the parameters
-    order = ['id', 'run_time', 'logZ', 'logZerr',
-             'ndims', 'nlive', 'nreap', 'prec']
-    # for par in parnames:
-    #     order.append(par)
+    order = ['id', 'run_time', 'logZ', 'logZerr', 'log10Z', 'nlive', 'prec']
+    for par in parnames:
+        order.append(par)
     results = results[order]
 
     print('\nParameters:')
@@ -227,7 +212,7 @@ if rank == 0:
         f = pd.read_csv(filename, sep='\t')
         f = f.append(results)
         f = f[order]
-        f.to_csv(filename, sep='\t', index=False, float_format='%.3f')
+        f.to_csv(filename, sep='\t', index=False, float_format='%8.5f')
     except:
         # File does not exist, must create it first
-        results.to_csv(filename, sep='\t', index=False, float_format='%.3f')
+        results.to_csv(filename, sep='\t', index=False, float_format='%8.5f')

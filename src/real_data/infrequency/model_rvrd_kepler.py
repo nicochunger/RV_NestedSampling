@@ -8,7 +8,7 @@ from math import pi
 
 # Ctypes declarations
 dirname = os.path.dirname(__file__)
-filename = os.path.join(dirname, '../../bin/trueanomaly.so')
+filename = os.path.join(dirname, '../../../bin/trueanomaly.so')
 CLIB = C.CDLL(filename)
 flp = C.POINTER(C.c_float)
 CLIB.trueanomaly_array.argtypes = [
@@ -125,21 +125,23 @@ def model(pardict, time):
     lin = pardict['drift1_lin']
     qua = pardict['drift1_qua']
     cub = pardict['drift1_cub']
-    try:
-        quar = pardict['drift1_quar']
-    except:
-        quar = 0
+    quar = pardict['drift1_quar']
     unitconstant = pardict['drift1_unitconstant']
 
     # Find out number of planets
     planets = []
     for i in range(1, 10):
-        if ('planet{}_period'.format(i) in pardict) or \
+        if ('planet{}_frequency'.format(i) in pardict) or \
            ('planet{}_logperiod'.format(i) in pardict):
             planets.append(i)
 
     rv_planet = np.zeros((len(planets) + 1, len(time)))
     for i, planet in enumerate(planets):
+        # Change frequency to period before calculating the model
+        freq = pardict.pop('planet{}_frequency'.format(planet))
+        pardict.update({'planet{}_period'.format(planet): (1/freq)})
+
+        # Calculate the model
         rv_planet[i] = modelk(pardict, time, planet=planet)
 
     # # Add secular acceleration
