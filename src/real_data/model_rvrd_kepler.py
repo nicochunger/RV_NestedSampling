@@ -12,7 +12,7 @@ filename = os.path.join(dirname, '../../bin/trueanomaly.so')
 CLIB = C.CDLL(filename)
 flp = C.POINTER(C.c_float)
 CLIB.trueanomaly_array.argtypes = [
-    flp, C.c_int, C.c_float, flp, C.c_int, C.c_int]
+    flp, C.c_int, C.c_float, flp, C.c_int, C.c_float]
 
 
 def trueanomaly(M, ecc, niterationmax=1e4):
@@ -27,7 +27,7 @@ def trueanomaly(M, ecc, niterationmax=1e4):
 
     # Compute trueanomaly in C and store result in nu
     CLIB.trueanomaly_array(p_M, int(len(M)), float(
-        ecc), p_nu, int(niterationmax), int(tol))
+        ecc), p_nu, int(niterationmax), float(tol))
 
     # Check if there was an error in trueanomaly computation
     if -1 in nu:

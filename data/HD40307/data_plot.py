@@ -46,19 +46,19 @@ rhk_H15 = H15["rhk"]
 
 plt.figure(0)
 plt.errorbar(time_H03, rv_H03, yerr=err_H03,
-             fmt='r.', ecolor='k', label="HARPS03")
-# plt.errorbar(time_H15, rv_H15, yerr=err_H15,
-#              fmt='y.', ecolor='k', label="HARPS15")
+             fmt='.', color="xkcd:scarlet", ecolor='k', label="HARPS03")
+plt.errorbar(time_H15, rv_H15, yerr=err_H15,
+             fmt='.', color="xkcd:emerald", ecolor='k', label="HARPS15")
 plt.xlabel("Tiempo (BJD-2,400,000)", fontsize=12)
 plt.ylabel(r"$\Delta$ Velocidad radial (m/s)", fontsize=12)
-# plt.legend(loc=2)
+plt.legend(loc=2)
 
 
 plt.figure(1)
-plt.plot(time_H03, rhk_H03, 'k.', label="HARPS03")
-# plt.plot(time_H15, rhk_H15, 'y.', label="HARPS15")
+plt.plot(time_H03, rhk_H03, '.', color="xkcd:black", label="HARPS03")
+plt.plot(time_H15, rhk_H15, '.', color="xkcd:emerald", label="HARPS15")
 plt.xlabel("Tiempo (BJD-2,400,000)", fontsize=12)
 plt.ylabel(r"$\log(R'_{HK})$", fontsize=12)
-# plt.legend(loc=2)
+plt.legend(loc=2)
 
 plt.show()
