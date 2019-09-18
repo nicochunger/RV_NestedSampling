@@ -1,1 +1,0 @@
-/home/nunger/tesis/codigo/src/real_data/output_analysis.py
