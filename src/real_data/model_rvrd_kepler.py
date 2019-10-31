@@ -115,7 +115,6 @@ def modelk(pardict, time, planet='1'):
 
     # Compute true anomaly
     nu = trueanomaly(ma, ecc)
-
     return K_ms * (np.cos(nu + omega_rad) + ecc * np.cos(omega_rad))
 
 
@@ -179,7 +178,6 @@ def lnlike(param, parnames, fixedpardict, data, covdict, **kwargs):
         # Construct model
         try:
             rvm = model(pardict, t)
-            #print(f'rvm = {rvm}')
         except RuntimeError:
             return -np.inf
 

@@ -44,21 +44,27 @@ rv_H15 = H15["vrad"] - 31349.31
 err_H15 = H15["svrad"]
 rhk_H15 = H15["rhk"]
 
-plt.figure(0)
+plt.figure(0, figsize=(8,4.5))
 plt.errorbar(time_H03, rv_H03, yerr=err_H03,
              fmt='.', color="xkcd:scarlet", ecolor='k', label="HARPS03")
 plt.errorbar(time_H15, rv_H15, yerr=err_H15,
              fmt='.', color="xkcd:emerald", ecolor='k', label="HARPS15")
-plt.xlabel("Tiempo (BJD-2,400,000)", fontsize=12)
-plt.ylabel(r"$\Delta$ Velocidad radial (m/s)", fontsize=12)
-plt.legend(loc=2)
+plt.xlabel("Time (BJD-2,400,000)", fontsize=14)
+plt.ylabel(r"$\Delta$ Radial velocity (m/s)", fontsize=14)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.legend(loc=2, fontsize=14)
+plt.tight_layout()
 
 
-plt.figure(1)
+plt.figure(1, figsize=(8,4.5))
 plt.plot(time_H03, rhk_H03, '.', color="xkcd:black", label="HARPS03")
 plt.plot(time_H15, rhk_H15, '.', color="xkcd:emerald", label="HARPS15")
-plt.xlabel("Tiempo (BJD-2,400,000)", fontsize=12)
-plt.ylabel(r"$\log(R'_{HK})$", fontsize=12)
-plt.legend(loc=2)
+plt.xlabel("Time (BJD-2,400,000)", fontsize=14)
+plt.ylabel(r"$\log(R'_{HK})$", fontsize=14)
+plt.legend(loc=2, fontsize=14)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.tight_layout()
 
 plt.show()

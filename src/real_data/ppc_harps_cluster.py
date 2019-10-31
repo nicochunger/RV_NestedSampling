@@ -26,8 +26,8 @@ from model_rvrd_kepler import lnlike, preprocess
 import config
 
 # PolyChord imports
-import PyPolyChord as PPC
-from PyPolyChord.settings import PolyChordSettings
+import pypolychord as PPC
+from pypolychord.settings import PolyChordSettings
 
 # Read arguments
 parser = argparse.ArgumentParser()
